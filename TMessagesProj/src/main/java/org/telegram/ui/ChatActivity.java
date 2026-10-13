@@ -20539,6 +20539,15 @@ public class ChatActivity extends BaseFragment implements
 
     @Override
     public void didReceivedNotification(int id, int account, final Object... args) {
+        if (id == NotificationCenter.updateInterfaces && args.length > 2 && "nyx_archive_cleared".equals(args[1])
+                && args[2] instanceof Long && (Long)args[2] == getUserConfig().getClientUserId()) {
+            ArrayList<Integer> localCopies = new ArrayList<>();
+            for (MessageObject object : messages) if (object.nyxDeleted) localCopies.add(object.getId());
+            nyxPurgingArchive = true;
+            try { processDeletedMessages(localCopies, ChatObject.isChannel(currentChat) ? -dialog_id : 0, false, false); }
+            finally { nyxPurgingArchive = false; }
+            return;
+        }
         if (id == NotificationCenter.messagesDidLoad) {
             didReceivedNotification_messagesDidLoad(id, account, args);
         } else {
@@ -35873,15 +35882,6 @@ public class ChatActivity extends BaseFragment implements
                     final NotificationCenter.NotificationCenterDelegate observer = new NotificationCenter.NotificationCenterDelegate() {
                         @Override
                         public void didReceivedNotification(int id, int account, Object... args) {
-        if (id == NotificationCenter.updateInterfaces && args.length > 2 && "nyx_archive_cleared".equals(args[1])
-                && args[2] instanceof Long && (Long)args[2] == getUserConfig().getClientUserId()) {
-            ArrayList<Integer> localCopies = new ArrayList<>();
-            for (MessageObject object : messages) if (object.nyxDeleted) localCopies.add(object.getId());
-            nyxPurgingArchive = true;
-            try { processDeletedMessages(localCopies, ChatObject.isChannel(currentChat) ? -dialog_id : 0, false, false); }
-            finally { nyxPurgingArchive = false; }
-            return;
-        }
                             if (id == NotificationCenter.messagesDidLoad && (Integer) args[10] == commentsClassGuid) {
                                 openCommentsChat.run();
                                 AndroidUtilities.runOnUIThread(() -> {

@@ -16,7 +16,7 @@ import static org.telegram.messenger.LocaleController.getString;
 public class NyxArchiveActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final long dialogId;private final int kind;
     private UniversalRecyclerView list;private String query="";private int generation;private boolean busy;
-    private boolean originallySecure;private final ArrayList<NyxArchive.Entry> entries=new ArrayList<>();
+    private boolean addedSecureFlag;private final ArrayList<NyxArchive.Entry> entries=new ArrayList<>();
     public NyxArchiveActivity(long dialogId,int kind){this.dialogId=dialogId;this.kind=kind;}
     @Override public View createView(Context context){
         actionBar.setTitle(getString(kind==NyxArchive.DELETED?R.string.NyxDeletedArchive:R.string.NyxEditsArchive));actionBar.setBackButtonImage(R.drawable.ic_ab_back);
@@ -65,10 +65,10 @@ public class NyxArchiveActivity extends BaseFragment implements NotificationCent
         });
     }
     @Override public boolean onFragmentCreate(){getNotificationCenter().addObserver(this,NotificationCenter.updateInterfaces);return super.onFragmentCreate();}
-    @Override public void onFragmentDestroy(){getNotificationCenter().removeObserver(this,NotificationCenter.updateInterfaces);if(getParentActivity()!=null&&!originallySecure)getParentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);super.onFragmentDestroy();}
+    @Override public void onFragmentDestroy(){getNotificationCenter().removeObserver(this,NotificationCenter.updateInterfaces);if(getParentActivity()!=null&&addedSecureFlag)getParentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);super.onFragmentDestroy();}
     @Override public void didReceivedNotification(int id,int account,Object... args){if(!NyxArchiveGate.canShow(currentAccount)){generation++;entries.clear();if(list!=null)list.adapter.update(false);}}
     @Override public void onResume(){
-        super.onResume();if(getParentActivity()!=null){originallySecure=(getParentActivity().getWindow().getAttributes().flags&WindowManager.LayoutParams.FLAG_SECURE)!=0;if(NyxConfig.get("protectArchive",currentAccount,false))getParentActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);}
+        super.onResume();if(getParentActivity()!=null){if(NyxConfig.get("protectArchive",currentAccount,false)&&(getParentActivity().getWindow().getAttributes().flags&WindowManager.LayoutParams.FLAG_SECURE)==0){getParentActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);addedSecureFlag=true;}}
         load(false);if(!NyxArchiveGate.canShow(currentAccount))NyxArchiveGate.require(currentAccount,this,()->load(false));
     }
     @Override public void onPause(){super.onPause();generation++;entries.clear();if(list!=null)list.adapter.update(false);}
