@@ -1,4 +1,4 @@
-# Nyxgram 0.3.1 — Android arm64
+# Nyxgram 0.4.1 — Android arm64
 
 ## Scope
 
@@ -47,3 +47,9 @@ Separate sticker/GIF switches default enabled; existing explicit sticker setting
 Approval is synchronous, per-thread and scoped to account/peer/exact selected media; inline results with a document normalize to that document. It is passed explicitly through schedule/payment callbacks and removed in finally, not a persisted flag. Completion rechecks foreground fragment/account/owner/dialog. Native rights, payments and scheduling still apply. Receiver stops/clears on dismissal. v1 settings files without the GIF switch import with the default enabled.
 
 Device QA required: static/TGS/video stickers and saved/search GIF animation; Cancel retains reply/text and sends zero messages; Send once; scheduled/paid sends; disabled switches; long-press menus; background/account switches; offline media; no duplicated dialog. Static and CI checks are not device tests.
+
+## Client-side Premium and deletion rendering (0.4.1)
+
+Local Premium is switchable and distinct from `UserConfig.isPremium()`, which remains the genuine server entitlement. Own-profile badge/status, emoji selection and local sticker effect display are enabled. Paid custom emoji in ordinary outgoing chats use their underlying text for the server; owner-scoped bounded metadata restores animation only on this device. Free emoji entities and real subscribers are unaffected. Local status is not sent as an RPC. Collectible statuses, paid reactions, boosts, upload limits and transcription are not unlocked.
+
+Deleted regular messages remain directly in the conversation, slightly faded, with the configurable symbol/color incorporated into the timestamp layout (including reserved width). Native Telegram deletion/storage processing still proceeds. Turning preservation off hides local copies without clearing encrypted history. Archive/PIN controls and exclusions remain in force. Local copies cannot recover messages never received before deletion.
