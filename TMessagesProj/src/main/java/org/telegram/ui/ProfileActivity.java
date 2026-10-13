@@ -651,6 +651,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int infoHeaderRow;
     private int infoHeaderRowEmpty;
     private int infoEndRowEmpty;
+    private int nyxIdRow = -1, nyxDcRow = -1, nyxUsernameRow = -1, nyxLinkRow = -1;
     private int phoneRow;
     private int noteRow;
     private int locationRow;
@@ -4442,6 +4443,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
                 }
+            } else if (position == nyxIdRow || position == nyxDcRow || position == nyxUsernameRow || position == nyxLinkRow) {
+                String value;
+                if (position == nyxIdRow) value = Long.toString(userId != 0 ? userId : chatId);
+                else if (position == nyxDcRow) {
+                    if (nyxPhotoDc() <= 0) return;
+                    value = "DC" + nyxPhotoDc();
+                } else if (position == nyxUsernameRow) value = "@" + nyxUsername();
+                else value = "https://t.me/" + nyxUsername();
+                AndroidUtilities.addToClipboard(value);
+                Toast.makeText(getParentActivity(), LocaleController.getString(R.string.NyxCopied), Toast.LENGTH_SHORT).show();
             } else if (position == settingsKeyRow) {
                 Bundle args = new Bundle();
                 args.putInt("chat_id", DialogObject.getEncryptedChatId(dialogId));
@@ -9550,6 +9561,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onResume() {
         super.onResume();
+        updateRowsIds();
         if (sharedMediaLayout != null) {
             sharedMediaLayout.onResume();
         }
@@ -10442,7 +10454,26 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         return chatId != 0;
     }
 
+    private String nyxUsername() {
+        if (userId != 0) return UserObject.getPublicUsername(getMessagesController().getUser(userId));
+        TLRPC.Chat chat = getMessagesController().getChat(chatId);
+        return chat == null ? null : ChatObject.getPublicUsername(chat);
+    }
+    private int nyxPhotoDc() {
+        if (userId != 0) {
+            TLRPC.User user = getMessagesController().getUser(userId);
+            return user == null || user.photo == null ? 0 : user.photo.dc_id;
+        }
+        TLRPC.Chat chat = getMessagesController().getChat(chatId);
+        return chat == null || chat.photo == null ? 0 : chat.photo.dc_id;
+    }
+    private void addNyxInfoRows() {
+        if (org.telegram.messenger.NyxConfig.get("showId", currentAccount, true)) nyxIdRow = rowCount++;
+        if (org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) nyxDcRow = rowCount++;
+        if (!TextUtils.isEmpty(nyxUsername())) { nyxUsernameRow = rowCount++; nyxLinkRow = rowCount++; }
+    }
     private void updateRowsIds() {
+        nyxIdRow = nyxDcRow = nyxUsernameRow = nyxLinkRow = -1;
         updateNotifications(false);
 
         boolean hasJoinRow = false;
@@ -10620,6 +10651,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 numberSectionRow = rowCount++;
                 numberRow = rowCount++;
+                addNyxInfoRows();
                 setUsernameRow = rowCount++;
                 bioRow = rowCount++;
 
@@ -10704,6 +10736,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
                 infoStartRow = rowCount;
+                addNyxInfoRows();
                 if (!isBot && (hasPhone || !hasInfo)) {
                     phoneRow = rowCount++;
                 }
@@ -10837,6 +10870,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
             }
             usernameRow = rowCount++;
+            addNyxInfoRows();
             if (actionsView == null) {
                 notificationsSimpleRow = rowCount++;
             }
@@ -10879,6 +10913,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     emptyRow = rowCount++;
                 }
             }
+            addNyxInfoRows();
             if (actionsView == null) {
                 if (infoHeaderRow != -1) {
                     notificationsDividerRow = rowCount++;
@@ -11420,7 +11455,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     nameTextView[a].setRightDrawable2(titleTextView.getRightDrawable2());
                 } else if (a == 0 && user.id != getUserConfig().getClientUserId() && !MessagesController.isSupportUser(user) && user.phone != null && user.phone.length() != 0 && getContactsController().contactsDict.get(user.id) == null &&
                         (getContactsController().contactsDict.size() != 0 || !getContactsController().isLoadingContacts())) {
-                    nameTextView[a].setText(PhoneFormat.getInstance().format("+" + user.phone));
+                    nameTextView[a].setText(org.telegram.messenger.NyxConfig.displayPhone(user, currentAccount));
                 } else {
                     nameTextView[a].setText(newString);
                 }
@@ -13456,7 +13491,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     TextDetailCell detailCell = (TextDetailCell) holder.itemView;
                     boolean containsQr = false;
                     boolean containsGift = false;
-                    if (position == birthdayRow) {
+                    if (position == nyxIdRow) {
+                        detailCell.setTextAndValue(Long.toString(userId != 0 ? userId : chatId), LocaleController.getString(R.string.NyxId), true);
+                    } else if (position == nyxDcRow) {
+                        int dc = nyxPhotoDc();
+                        detailCell.setTextAndValue(dc > 0 ? "DC" + dc : LocaleController.getString(R.string.NyxUnavailable), LocaleController.getString(R.string.NyxDc), true);
+                    } else if (position == nyxUsernameRow) {
+                        detailCell.setTextAndValue("@" + nyxUsername(), LocaleController.getString(R.string.NyxUsername), true);
+                    } else if (position == nyxLinkRow) {
+                        detailCell.setTextAndValue("https://t.me/" + nyxUsername(), LocaleController.getString(R.string.NyxLink), false);
+                    } else if (position == birthdayRow) {
                         TLRPC.UserFull userFull = getMessagesController().getUserFull(userId);
                         if (userFull != null && userFull.birthday != null) {
                             final boolean today = BirthdayController.isToday(userFull);
@@ -13491,7 +13535,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             text = PhoneFormat.getInstance().format("+" + vcardPhone);
                             phoneNumber = vcardPhone;
                         } else if (user != null && !TextUtils.isEmpty(user.phone)) {
-                            text = PhoneFormat.getInstance().format("+" + user.phone);
+                            text = org.telegram.messenger.NyxConfig.displayPhone(user, currentAccount);
                             phoneNumber = user.phone;
                         } else {
                             text = LocaleController.getString(R.string.PhoneHidden);
@@ -13585,7 +13629,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
                         String value;
                         if (user != null && user.phone != null && user.phone.length() != 0) {
-                            value = PhoneFormat.getInstance().format("+" + user.phone);
+                            value = org.telegram.messenger.NyxConfig.displayPhone(user, currentAccount);
                         } else {
                             value = LocaleController.getString(R.string.NumberUnknown);
                         }
@@ -14278,7 +14322,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             if (notificationRow != -1) {
                 int position = holder.getAdapterPosition();
-                return position == notificationRow || position == numberRow || position == privacyRow ||
+                return position == nyxIdRow || position == nyxDcRow || position == nyxUsernameRow || position == nyxLinkRow || position == notificationRow || position == numberRow || position == privacyRow ||
                         position == languageRow || position == setUsernameRow || position == bioRow ||
                         position == versionRow || position == dataRow || position == chatRow ||
                         position == questionRow || position == devicesRow || position == filtersRow || position == stickersRow ||
@@ -14314,7 +14358,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
+            } else if (position == nyxIdRow || position == nyxDcRow || position == nyxUsernameRow || position == nyxLinkRow || position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
                 return VIEW_TYPE_TEXT_DETAIL;
             } else if (position == usernameRow || position == setUsernameRow) {
                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;
@@ -15712,6 +15756,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             put(++pointer, infoHeaderRow, sparseIntArray);
             put(++pointer, infoHeaderRowEmpty, sparseIntArray);
             put(++pointer, infoEndRowEmpty, sparseIntArray);
+            put(++pointer, nyxIdRow, sparseIntArray);
+            put(++pointer, nyxDcRow, sparseIntArray);
+            put(++pointer, nyxUsernameRow, sparseIntArray);
+            put(++pointer, nyxLinkRow, sparseIntArray);
             put(++pointer, phoneRow, sparseIntArray);
             put(++pointer, noteRow, sparseIntArray);
             put(++pointer, locationRow, sparseIntArray);

@@ -6846,6 +6846,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    private boolean nyxStartupFolderApplied;
     private void updateFilterTabs(boolean force, boolean animated) {
         if (filterTabsView == null || inPreviewMode || searchIsShowed || (rightSlidingDialogContainer != null && rightSlidingDialogContainer.hasFragment())) {
             return;
@@ -6901,6 +6902,21 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         viewPages[a].selectedType = filters.size() - 1;
                     }
                     viewPages[a].listView.setScrollingTouchSlop(RecyclerView.TOUCH_SLOP_PAGING);
+                }
+                if (!nyxStartupFolderApplied && initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && folderId == 0 && communityId == 0) {
+                    int preferred = org.telegram.messenger.NyxConfig.startupFolder(currentAccount);
+                    if (preferred != 0) {
+                        for (int n = 0; n < filters.size(); n++) {
+                            MessagesController.DialogFilter f = filters.get(n);
+                            if (f.id == preferred && !f.locked && !f.isDefault()) {
+                                filterTabsView.selectTabWithStableId(f.localId);
+                                viewPages[0].selectedType = n;
+                                updateCurrentTab = true;
+                                break;
+                            }
+                        }
+                    }
+                    nyxStartupFolderApplied = true;
                 }
                 filterTabsView.finishAddingTabs(animatedUpdateItems);
                 if (updateCurrentTab) {
@@ -13675,6 +13691,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             io.setTranslationY(-dp(64));
             return;
         }
+
+        io.add(R.drawable.settings_privacy,
+            getString(org.telegram.messenger.NyxConfig.ghost(currentAccount) ? R.string.NyxGhostOff : R.string.NyxGhostOn),
+            () -> org.telegram.messenger.NyxConfig.setGhost(currentAccount, !org.telegram.messenger.NyxConfig.ghost(currentAccount)));
+        io.add(R.drawable.settings_privacy, getString(R.string.NyxTitle), () -> presentFragment(new NyxgramActivity()));
+        io.addGap();
 
         final boolean isCurrentThemeDark;
         if (resourceProvider != null) {

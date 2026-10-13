@@ -880,6 +880,7 @@ public class EmojiAnimationsOverlay implements NotificationCenter.NotificationCe
     }
 
     private void sendCurrentTaps() {
+        if (org.telegram.messenger.NyxConfig.hideTyping(currentAccount)) { clearSendingInfo(); return; }
         if (lastTappedMsgId == 0) {
             return;
         }

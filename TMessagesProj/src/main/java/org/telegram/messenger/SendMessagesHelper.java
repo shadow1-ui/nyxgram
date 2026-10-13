@@ -1911,6 +1911,22 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public void sendSticker(TLRPC.Document document, String query, long peer, CharSequence caption, VideoEditedInfo videoEditedInfo, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, MessageObject.SendAnimationData sendAnimationData, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean updateStickersOrder, Object parentObject, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId, MessageSuggestionParams suggestionParams, boolean invertMedia) {
+        if (document == null) return;
+        if (NyxConfig.get("confirmStickers", currentAccount, false) && (MessageObject.isStickerDocument(document) || MessageObject.isAnimatedStickerDocument(document, true))) {
+            AndroidUtilities.runOnUIThread(() -> {
+                BaseFragment fragment = LaunchActivity.getLastFragmentIncludeMainTabs();
+                // Fail closed: no foreground activity means no confirmed send.
+                if (fragment == null || fragment.getParentActivity() == null || fragment.getCurrentAccount() != currentAccount) return;
+                fragment.showDialog(new AlertDialog.Builder(fragment.getParentActivity())
+                    .setTitle(LocaleController.getString(R.string.NyxTitle)).setMessage(LocaleController.getString(R.string.NyxStickerQuestion))
+                    .setPositiveButton(LocaleController.getString(R.string.NyxSend), (dialog, which) -> sendNyxConfirmedSticker(document, query, peer, caption, videoEditedInfo, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams, invertMedia))
+                    .setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
+            });
+            return;
+        }
+        sendNyxConfirmedSticker(document, query, peer, caption, videoEditedInfo, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams, invertMedia);
+    }
+    private void sendNyxConfirmedSticker(TLRPC.Document document, String query, long peer, CharSequence caption, VideoEditedInfo videoEditedInfo, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, MessageObject.SendAnimationData sendAnimationData, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean updateStickersOrder, Object parentObject, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId, MessageSuggestionParams suggestionParams, boolean invertMedia) {
         if (document == null) {
             return;
         }

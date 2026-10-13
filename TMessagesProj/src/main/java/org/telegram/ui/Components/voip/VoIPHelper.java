@@ -74,6 +74,17 @@ public class VoIPHelper {
 	private static final int VOIP_SUPPORT_ID = 4244000;
 
 	public static void startCall(TLRPC.User user, boolean videoCall, boolean canVideoCall, final Activity activity, TLRPC.UserFull userFull, AccountInstance accountInstance) {
+        int account = accountInstance == null ? UserConfig.selectedAccount : accountInstance.getCurrentAccount();
+        if (activity == null || user == null) return;
+        if (org.telegram.messenger.NyxConfig.get("confirmCalls", account, false)) {
+            new AlertDialog.Builder(activity).setTitle(LocaleController.getString(R.string.NyxTitle))
+                .setMessage(LocaleController.getString(R.string.NyxCallQuestion))
+                .setPositiveButton(LocaleController.getString(R.string.NyxCall), (dialog, which) ->
+                    startNyxConfirmedCall(user, videoCall, canVideoCall, activity, userFull, accountInstance))
+                .setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).show();
+        } else startNyxConfirmedCall(user, videoCall, canVideoCall, activity, userFull, accountInstance);
+    }
+    private static void startNyxConfirmedCall(TLRPC.User user, boolean videoCall, boolean canVideoCall, final Activity activity, TLRPC.UserFull userFull, AccountInstance accountInstance) {
 		if (accountInstance == null ? MessagesController.getInstance(UserConfig.selectedAccount).isFrozen() : accountInstance.getMessagesController().isFrozen()) {
 			AccountFrozenAlert.show(accountInstance == null ? UserConfig.selectedAccount : accountInstance.getCurrentAccount());
 			return;
@@ -126,6 +137,17 @@ public class VoIPHelper {
 	}
 
 	public static void startCall(TLRPC.Chat chat, TLRPC.InputPeer peer, String hash, boolean createCall, Boolean checkJoiner, Activity activity, BaseFragment fragment, AccountInstance accountInstance) {
+        if (activity == null || chat == null) return;
+        int account = accountInstance == null ? UserConfig.selectedAccount : accountInstance.getCurrentAccount();
+        if (org.telegram.messenger.NyxConfig.get("confirmCalls", account, false)) {
+            new AlertDialog.Builder(activity).setTitle(LocaleController.getString(R.string.NyxTitle))
+                .setMessage(LocaleController.getString(createCall ? R.string.NyxGroupCallCreate : R.string.NyxGroupCallJoin))
+                .setPositiveButton(LocaleController.getString(R.string.NyxContinue), (dialog, which) ->
+                    startNyxConfirmedGroupCall(chat, peer, hash, createCall, checkJoiner, activity, fragment, accountInstance))
+                .setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).show();
+        } else startNyxConfirmedGroupCall(chat, peer, hash, createCall, checkJoiner, activity, fragment, accountInstance);
+    }
+    private static void startNyxConfirmedGroupCall(TLRPC.Chat chat, TLRPC.InputPeer peer, String hash, boolean createCall, Boolean checkJoiner, Activity activity, BaseFragment fragment, AccountInstance accountInstance) {
 		if (activity == null) {
 			return;
 		}

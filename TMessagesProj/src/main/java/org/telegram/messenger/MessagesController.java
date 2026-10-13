@@ -6602,6 +6602,7 @@ public class MessagesController extends BaseController implements NotificationCe
         ignoreSetOnline = false;
 
         Utilities.stageQueue.postRunnable(() -> {
+            nyxUnreadTasks.clear();
             readTasks.clear();
             readTasksMap.clear();
             repliesReadTasks.clear();
@@ -10524,7 +10525,7 @@ public class MessagesController extends BaseController implements NotificationCe
         checkReadTasks();
 
         if (getUserConfig().isClientActivated()) {
-            if (!ignoreSetOnline && getConnectionsManager().getPauseTime() == 0 && ApplicationLoader.isScreenOn && !ApplicationLoader.mainInterfacePausedStageQueue) {
+            if (!NyxConfig.hideOnline(currentAccount) && !ignoreSetOnline && getConnectionsManager().getPauseTime() == 0 && ApplicationLoader.isScreenOn && !ApplicationLoader.mainInterfacePausedStageQueue) {
                 if (ApplicationLoader.mainInterfacePausedStageQueueTime != 0 && Math.abs(ApplicationLoader.mainInterfacePausedStageQueueTime - System.currentTimeMillis()) > 1000) {
                     if (statusSettingState != 1 && (lastStatusUpdateTime == 0 || Math.abs(System.currentTimeMillis() - lastStatusUpdateTime) >= 55000 || offlineSent)) {
                         statusSettingState = 1;
@@ -10534,11 +10535,11 @@ public class MessagesController extends BaseController implements NotificationCe
                         }
 
                         TL_account.updateStatus req = new TL_account.updateStatus();
-                        req.offline = false;
+                        req.offline = NyxConfig.hideOnline(currentAccount);
                         statusRequest = getConnectionsManager().sendRequest(req, (response, error) -> {
                             if (error == null) {
                                 lastStatusUpdateTime = System.currentTimeMillis();
-                                offlineSent = false;
+                                offlineSent = req.offline;
                                 statusSettingState = 0;
                             } else {
                                 if (lastStatusUpdateTime != 0) {
@@ -11383,6 +11384,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean sendTyping(long dialogId, long threadMsgId, int action, String emojicon, int classGuid) {
+        if (NyxConfig.hideTyping(currentAccount)) return false;
         if (action < 0 || action >= sendingTypings.length || dialogId == 0) {
             return false;
         }
@@ -14405,6 +14407,10 @@ public class MessagesController extends BaseController implements NotificationCe
         long dialogId = messageObject.getDialogId();
         getMessagesStorage().markMessagesContentAsRead(dialogId, arrayList, 0, 0);
         getNotificationCenter().postNotificationName(NotificationCenter.messagesReadContent, dialogId, arrayList);
+        // Never alter secret-chat or disappearing-media timers.
+        if (nyxMayHideRead(dialogId)
+                && messageObject.messageOwner.ttl_period == 0
+                && (messageObject.messageOwner.media == null || messageObject.messageOwner.media.ttl_seconds == 0)) return;
         if (messageObject.getId() < 0) {
             markMessageAsRead(messageObject.getDialogId(), messageObject.messageOwner.random_id, Integer.MIN_VALUE);
         } else {
@@ -14433,6 +14439,7 @@ public class MessagesController extends BaseController implements NotificationCe
 
     public void markMentionMessageAsRead(int mid, long channelId, long did) {
         getMessagesStorage().markMentionMessageAsRead(-channelId, mid, did);
+        if (nyxMayHideRead(did)) return;
         if (channelId != 0) {
             TLRPC.TL_channels_readMessageContents req = new TLRPC.TL_channels_readMessageContents();
             req.channel = getInputChannel(channelId);
@@ -14556,14 +14563,64 @@ public class MessagesController extends BaseController implements NotificationCe
         }
     }
 
+    private final java.util.LinkedHashMap<String, ReadTask> nyxUnreadTasks = new java.util.LinkedHashMap<>();
+    public void clearNyxReadState() {
+        Utilities.stageQueue.postRunnable(nyxUnreadTasks::clear);
+    }
+    public void updateNyxOnlineState() {
+        Utilities.stageQueue.postRunnable(() -> {
+            if (statusRequest != 0) { getConnectionsManager().cancelRequest(statusRequest, true); statusRequest = 0; }
+            statusSettingState = 0;
+            lastStatusUpdateTime = 0;
+            if (NyxConfig.hideOnline(currentAccount)) {
+                TL_account.updateStatus req = new TL_account.updateStatus(); req.offline = true;
+                getConnectionsManager().sendRequest(req, (response, error) -> { offlineSent = error == null; });
+            }
+        });
+    }
+    /** The caller supplies only the highest message actually shown, never dialog.top_message. */
+    public void sendNyxRead(long did, long thread, int visibleMaxId, long monoPeer, Utilities.Callback<Boolean> callback) {
+        Utilities.stageQueue.postRunnable(() -> {
+            if (DialogObject.isEncryptedDialog(did) || visibleMaxId <= 0) {
+                AndroidUtilities.runOnUIThread(() -> callback.run(false)); return;
+            }
+            String key = did + "_" + thread;
+            ReadTask saved = nyxUnreadTasks.get(key);
+            ReadTask task = new ReadTask(); task.dialogId = did; task.replyId = thread;
+            task.monoForumPeerId = monoPeer; task.maxId = visibleMaxId;
+            if (saved != null) task.maxId = Math.max(task.maxId, saved.maxId);
+            completeReadTask(task, true, callback);
+        });
+    }
+    private boolean nyxMayHideRead(long did) {
+        if (!NyxConfig.hideRead(currentAccount) || DialogObject.isEncryptedDialog(did)) return false;
+        if (did > 0) {
+            TLRPC.UserFull full = getUserFull(did);
+            return full == null || full.ttl_period == 0;
+        }
+        TLRPC.ChatFull full = getChatFull(-did);
+        return full == null || full.ttl_period == 0;
+    }
     private void completeReadTask(ReadTask task) {
+        completeReadTask(task, false, null);
+    }
+    private void completeReadTask(ReadTask task, boolean force, Utilities.Callback<Boolean> callback) {
+        if (!force && nyxMayHideRead(task.dialogId)) {
+            String key = task.dialogId + "_" + task.replyId;
+            ReadTask old = nyxUnreadTasks.get(key);
+            if (old != null) task.maxId = Math.max(old.maxId, task.maxId);
+            nyxUnreadTasks.put(key, task);
+            if (nyxUnreadTasks.size() > 512) nyxUnreadTasks.remove(nyxUnreadTasks.keySet().iterator().next());
+            return;
+        }
+
         if (task.replyId != 0 && task.monoForumPeerId == 0) {
             TLRPC.TL_messages_readDiscussion req = new TLRPC.TL_messages_readDiscussion();
             req.msg_id = (int) task.replyId;
             req.peer = getInputPeer(task.dialogId);
             req.read_max_id = task.maxId;
             getConnectionsManager().sendRequest(req, (response, error) -> {
-
+                nyxReadResult(task, error, callback);
             });
         } else if (!DialogObject.isEncryptedDialog(task.dialogId)) {
             TLRPC.InputPeer inputPeer = getInputPeer(task.dialogId);
@@ -14587,6 +14644,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 req = request;
             }
             getConnectionsManager().sendRequest(req, (response, error) -> {
+                nyxReadResult(task, error, callback);
                 if (error == null) {
                     if (response instanceof TLRPC.TL_messages_affectedMessages) {
                         TLRPC.TL_messages_affectedMessages res = (TLRPC.TL_messages_affectedMessages) response;
@@ -14607,6 +14665,11 @@ public class MessagesController extends BaseController implements NotificationCe
                 });
             }
         }
+    }
+
+    private void nyxReadResult(ReadTask task, TLRPC.TL_error error, Utilities.Callback<Boolean> callback) {
+        if (error == null) nyxUnreadTasks.remove(task.dialogId + "_" + task.replyId);
+        if (callback != null) AndroidUtilities.runOnUIThread(() -> callback.run(error == null));
     }
 
     private void checkReadTasks() {
@@ -14663,6 +14726,7 @@ public class MessagesController extends BaseController implements NotificationCe
             return;
         }
         getMessagesStorage().resetMentionsCount(dialogId, topicId, 0);
+        if (nyxMayHideRead(dialogId)) return;
         TLRPC.TL_messages_readMentions req = new TLRPC.TL_messages_readMentions();
         req.peer = getInputPeer(dialogId);
         if (topicId != 0) {

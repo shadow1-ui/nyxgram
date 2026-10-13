@@ -520,6 +520,12 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         }
     }
 
+    @Override public void onResume() {
+        super.onResume();
+        setInfo();
+        if (listView != null) listView.adapter.update(false);
+    }
+
     public void setInfo() {
         setInfo(getUserConfig().getCurrentUser());
     }
@@ -533,7 +539,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         titleView.setText(UserObject.getUserName(user));
         final StringBuilder sb = new StringBuilder();
         if (user != null) {
-            sb.append(PhoneFormat.getInstance().format("+" + user.phone));
+            sb.append(org.telegram.messenger.NyxConfig.displayPhone(user, currentAccount));
         }
         final String username = UserObject.getPublicUsername(user);
         if (username != null) {
@@ -651,7 +657,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
         } else if (suggestions.contains("VALIDATE_PHONE_NUMBER") && getUserConfig().getCurrentUser() != null) {
             items.add(SuggestionCell.Factory.of(
-                formatString(R.string.CheckPhoneNumber, PhoneFormat.getInstance().format("+" + getUserConfig().getCurrentUser().phone)),
+                formatString(R.string.CheckPhoneNumber, org.telegram.messenger.NyxConfig.displayPhone(getUserConfig().getCurrentUser(), currentAccount)),
                 replaceSingleTag(getString(R.string.CheckPhoneNumberInfo), () -> {
                     Browser.openUrl(getContext(), getString(R.string.CheckPhoneNumberLearnMoreUrl));
                 }),
@@ -685,6 +691,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
         }
 
+        items.add(SettingCell.Factory.of(1001, 0xFF8A4DDB, 0xFF4430A7, R.drawable.settings_privacy, getString(R.string.NyxTitle), getString(R.string.NyxSettingsHint)));
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
         items.add(SettingCell.Factory.of(3, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
@@ -812,6 +819,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             return;
         }
         switch (item.id) {
+            case 1001:
+                presentSettingFragment(new NyxgramActivity());
+                break;
             case 1:
                 presentSettingFragment(new UserInfoActivity());
                 break;

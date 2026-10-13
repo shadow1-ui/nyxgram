@@ -8,6 +8,8 @@
 
 package org.telegram.ui;
 
+import android.widget.Toast;
+
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.lerp;
 import static org.telegram.messenger.LocaleController.formatPluralStringComma;
@@ -3943,6 +3945,21 @@ public class ChatActivity extends BaseFragment implements
                         quickReplyShortcut = name;
                         avatarContainer.setTitle(name);
                     });
+                } else if (id == 9901) {
+                    org.telegram.messenger.NyxConfig.setGhost(currentAccount, !org.telegram.messenger.NyxConfig.ghost(currentAccount));
+                    Toast.makeText(getParentActivity(), LocaleController.getString(R.string.NyxGhost) + ": " + LocaleController.getString(org.telegram.messenger.NyxConfig.ghost(currentAccount) ? R.string.NyxEnabled : R.string.NyxDisabled), Toast.LENGTH_SHORT).show();
+                } else if (id == 9902) {
+                    showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(LocaleController.getString(R.string.NyxManualRead))
+                        .setMessage(LocaleController.getString(R.string.NyxManualReadQuestion))
+                        .setPositiveButton(LocaleController.getString(R.string.NyxManualRead), (dialog, which) -> {
+                            int max = 0;
+                            for (MessageObject m : messages) if (m.getDialogId() == dialog_id && m.getId() > max && !m.messageOwner.out) max = m.getId();
+                            getMessagesController().sendNyxRead(dialog_id, threadMessageId, max, getSendMonoForumPeerId(), ok -> {
+                                if (getParentActivity() != null) Toast.makeText(getParentActivity(), LocaleController.getString(ok ? R.string.NyxReadSent : R.string.NyxReadError), Toast.LENGTH_SHORT).show();
+                            });
+                        }).setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
+                } else if (id == 9903) {
+                    presentFragment(new NyxgramActivity());
                 } else if (id == chat_menu_attach) {
                     ActionBarMenuSubItem attach = new ActionBarMenuSubItem(context, false, true, true, getResourceProvider());
                     attach.setTextAndIcon(LocaleController.getString(R.string.AttachMenu), R.drawable.input_attach);
@@ -4308,6 +4325,11 @@ public class ChatActivity extends BaseFragment implements
             });
             otherIcon.addView(headerItem.getIconView());
             headerItem.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+            headerItem.lazilyAddSubItem(9901, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxGhost));
+            if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                headerItem.lazilyAddSubItem(9902, R.drawable.msg_markread, LocaleController.getString(R.string.NyxManualRead));
+            }
+            headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
 
             if (currentUser != null && currentUser.self && chatMode != MODE_SAVED) {
                 savedChatsItem = headerItem.lazilyAddSubItem(view_as_topics, R.drawable.msg_topics, LocaleController.getString(R.string.SavedViewAsChats));
@@ -4483,6 +4505,11 @@ public class ChatActivity extends BaseFragment implements
             headerItem = menu.addItem(chat_menu_options, otherIcon);
             otherIcon.addView(headerItem.getIconView());
             headerItem.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+            headerItem.lazilyAddSubItem(9901, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxGhost));
+            if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                headerItem.lazilyAddSubItem(9902, R.drawable.msg_markread, LocaleController.getString(R.string.NyxManualRead));
+            }
+            headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
 
             headerItem.lazilyAddSubItem(copy_business_link, R.drawable.msg_copy, getString(R.string.Copy));
             headerItem.lazilyAddSubItem(share_business_link, R.drawable.msg_share, getString(R.string.LinkActionShare));
