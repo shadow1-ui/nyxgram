@@ -3414,7 +3414,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
     }
 
-    public int editMessage(MessageObject messageObject, String message, boolean searchLinks, final BaseFragment fragment, ArrayList<TLRPC.MessageEntity> entities, int scheduleDate, int scheduleRepeatPeriod) {
+    public int editMessage(MessageObject messageObject, String message, boolean searchLinks, final BaseFragment fragment, ArrayList<TLRPC.MessageEntity> originalEntities, int scheduleDate, int scheduleRepeatPeriod) {
+        NyxPremium.rememberEdit(currentAccount,messageObject.messageOwner,message,originalEntities);
+        ArrayList<TLRPC.MessageEntity> entities=NyxPremium.serverEntities(currentAccount,messageObject.getDialogId(),originalEntities);
         if (fragment == null || fragment.getParentActivity() == null) {
             return 0;
         }
@@ -4286,7 +4288,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         TLRPC.TL_messageMediaWebPage mediaWebPage = sendMessageParams.mediaWebPage;
         boolean searchLinks = sendMessageParams.searchLinks;
         MessageObject retryMessageObject = sendMessageParams.retryMessageObject;
-        ArrayList<TLRPC.MessageEntity> entities = sendMessageParams.entities;
+        ArrayList<TLRPC.MessageEntity> entities = NyxPremium.serverEntities(currentAccount,peer,sendMessageParams.entities);
         TLRPC.ReplyMarkup replyMarkup = sendMessageParams.replyMarkup;
         HashMap<String, String> params = sendMessageParams.params;
         boolean notify = sendMessageParams.notify;
@@ -5146,6 +5148,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             if (replyToTopMsg != null && replyToTopMsg == reply && replyToTopMsg.getId() == 1 || destroyReply) {
                 reply = null;
             }
+            NyxPremium.remember(currentAccount,newMsg,sendMessageParams.entities);
             newMsgObj = new MessageObject(currentAccount, newMsg, reply, true, true);
             newMsgObj.sendAnimationData = sendAnimationData;
             newMsgObj.wasJustSent = true;

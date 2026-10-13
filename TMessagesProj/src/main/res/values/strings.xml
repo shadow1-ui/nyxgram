@@ -11309,7 +11309,7 @@
     <string name="NyxAppearance">Оформление</string>
     <string name="NyxUpdates">Обновления</string>
     <string name="NyxProfileLinks">Профили и ссылки</string>
-    <string name="NyxKeepDeleted">Сохранять удалённые сообщения</string>
+    <string name="NyxKeepDeleted">Показывать удалённые сообщения в чатах</string>
     <string name="NyxKeepEdits">Сохранять историю редактирования</string>
     <string name="NyxArchiveHint">Сохраняются только сообщения, доступные на этом устройстве после включения функции. Восстановить ранее недоступные сообщения нельзя. Секретные чаты, сообщения с таймером и одноразовые медиа исключены. Архив не отправляется на сервер.</string>
     <string name="NyxArchiveConsent">Вы хотите включить локальное сохранение сообщений? Копии будут оставаться на устройстве после удаления или изменения оригинала. Вы можете очистить их отдельно. Медиа не загружаются и не копируются автоматически.</string>
@@ -11413,8 +11413,8 @@
     <string name="NyxSendPreviewHint">Нажмите «Отправить» или «Отмена».</string>
     <string name="NyxFreeIcons">Иконки Nyxgram</string>
     <string name="NyxFreeIconsHint">Все 16 иконок доступны без подписки. Изменение иконки применяется сразу; оболочка Android может обновить её с задержкой.</string>
-    <string name="NyxLocalPremium">Локальный Premium — оформление</string>
-    <string name="NyxLocalPremiumHint">Декоративный значок виден только Вам в Nyxgram. Это не подписка Telegram: статус аккаунта и серверные возможности не меняются. Все наши иконки бесплатны и без этого режима.</string>
+    <string name="NyxLocalPremium">Локальный Telegram Premium</string>
+    <string name="NyxLocalPremiumHint">Локальная звезда Premium, эмодзи-статус, выбор анимированных эмодзи и эффекты стикеров. В других чатах платные эмодзи видны Вам анимированными, а собеседнику отправляется обычный эмодзи. Это не серверная подписка: лимиты, загрузка 4 ГБ, голоса расшифровки, бусты и платные реакции не меняются.</string>
     <string name="NyxLocalDecor">Локальное оформление</string>
     <string name="NyxStartup">Заставка при запуске</string>
     <string name="NyxStartupCaption">Связь в Вашем ритме</string>
@@ -11440,4 +11440,5 @@
     <string name="NyxIconPrism">Prism</string>
     <string name="NyxIconObsidian">Obsidian</string>
     <string name="NyxIconPaper">Paper</string>
+    <string name="NyxLocalCollectibleUnavailable">Коллекционные статусы нельзя включить локально. Выберите обычный эмодзи-статус.</string>
 </resources>

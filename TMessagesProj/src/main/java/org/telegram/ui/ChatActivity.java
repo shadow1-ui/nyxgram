@@ -16142,7 +16142,7 @@ public class ChatActivity extends BaseFragment implements
                     updateReactionsMentionButton(true);
                 }
                 getDownloadController().checkUnviewedDownloads(messageCell.getId(), dialog_id);
-                boolean allowPlayEffect = messageObject.getEffect() != null || ((messageObject.messageOwner.media != null && !messageObject.messageOwner.media.nopremium) || (messageObject.isAnimatedEmojiStickerSingle() && dialog_id > 0));
+                boolean allowPlayEffect = messageObject.getEffect() != null || ((messageObject.messageOwner.media != null && (!messageObject.messageOwner.media.nopremium || org.telegram.messenger.NyxPremium.enabled(currentAccount))) || (messageObject.isAnimatedEmojiStickerSingle() && dialog_id > 0));
                 if ((chatListItemAnimator == null || !chatListItemAnimator.isRunning()) && (!messageObject.isOutOwner() || messageObject.forcePlayEffect) && allowPlayEffect && !messageObject.messageOwner.premiumEffectWasPlayed && (messageObject.isPremiumSticker() || messageCell.getEffect() != null || messageObject.isAnimatedEmojiStickerSingle()) && emojiAnimationsOverlay.isIdle() && emojiAnimationsOverlay.checkPosition(messageCell, chatListViewPaddingTop, chatListView.getMeasuredHeight() - blurredViewBottomOffset)) {
                     emojiAnimationsOverlay.onTapItem(messageCell, ChatActivity.this, false);
                 } else if (messageObject.isAnimatedAnimatedEmoji()) {
@@ -20540,7 +20540,7 @@ public class ChatActivity extends BaseFragment implements
 
     @Override
     public void didReceivedNotification(int id, int account, final Object... args) {
-        if (id == NotificationCenter.updateInterfaces && args.length > 2 && "nyx_archive_cleared".equals(args[1])
+        if (id == NotificationCenter.updateInterfaces && args.length > 2 && ("nyx_archive_cleared".equals(args[1]) || "nyx_deleted_visibility".equals(args[1]) && !org.telegram.messenger.NyxConfig.get("keepDeleted",currentAccount,false))
                 && args[2] instanceof Long && (Long)args[2] == getUserConfig().getClientUserId()) {
             ArrayList<Integer> localCopies = new ArrayList<>();
             for (MessageObject object : messages) if (object.nyxDeleted) localCopies.add(object.getId());
@@ -26427,9 +26427,9 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (!nyxPurgingArchive && chatMode == MODE_DEFAULT && loadIndex == 0 && !obj.scheduled
                         && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
-                        && org.telegram.messenger.NyxArchive.eligible(obj.messageOwner) && NyxArchiveGate.canShow(currentAccount)) {
+                        && org.telegram.messenger.NyxArchive.eligible(obj.messageOwner) && !sent) {
                     org.telegram.messenger.NyxArchive.deleted(currentAccount, obj.messageOwner);
-                    obj.nyxDeleted = true; updated = true;
+                    obj.nyxDeleted = true; obj.forceUpdate = true; updated = true;
                     if (editingMessageObject == obj) hideFieldPanel(true);
                     continue;
                 }

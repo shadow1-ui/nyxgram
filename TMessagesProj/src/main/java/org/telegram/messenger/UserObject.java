@@ -152,6 +152,7 @@ public class UserObject {
         if (user == null) {
             return null;
         }
+        for(int account=0;account<UserConfig.MAX_ACCOUNT_COUNT;account++)if(user.id==UserConfig.getInstance(account).getClientUserId()&&NyxPremium.localOnly(account))return getEmojiStatusDocumentId(NyxPremium.status(account,user));
         return getEmojiStatusDocumentId(user.emoji_status);
     }
 

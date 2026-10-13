@@ -18539,6 +18539,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 currentTimeString = TextUtils.concat(formatString(R.string.MessageScheduledRepeatSeconds, period), ", ", currentTimeString);
             }
         }
+        if(messageObject.nyxDeleted){
+            String mark=org.telegram.messenger.NyxAppearance.symbol(currentAccount);
+            android.text.SpannableStringBuilder label=new android.text.SpannableStringBuilder(mark+" ").append(currentTimeString);
+            label.setSpan(new android.text.style.ForegroundColorSpan(org.telegram.messenger.NyxAppearance.color(currentAccount)),0,mark.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            currentTimeString=label;
+        }
         timeTextWidth = timeWidth = (int) Math.ceil(Theme.chat_timePaint.measureText(currentTimeString, 0, currentTimeString == null ? 0 : currentTimeString.length()));
         if (currentMessageObject.scheduled && currentMessageObject.messageOwner.date == 0x7FFFFFFE || currentMessageObject.notime) {
             timeWidth -= dp(8);
@@ -20144,6 +20150,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         drawInternal(canvas);
     }
     public void drawInternal(Canvas canvas) {
+        boolean dim=currentMessageObject!=null&&currentMessageObject.nyxDeleted&&org.telegram.ui.NyxArchiveGate.canShow(currentAccount);
+        int layer=dim?canvas.saveLayerAlpha(0,0,getWidth(),getHeight(),225):canvas.save();
+        try{drawNyxContent(canvas);}finally{canvas.restoreToCount(layer);}
+    }
+    private void drawNyxContent(Canvas canvas) {
         if (currentMessageObject != null && currentMessageObject.nyxDeleted && !org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) {
             canvas.drawColor(getThemedColor(Theme.key_windowBackgroundWhite));
             android.graphics.Paint locked = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
@@ -23883,15 +23894,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     public void drawTime(Canvas canvas, float alpha, boolean fromParent) {
-        if (currentMessageObject != null && currentMessageObject.nyxDeleted) {
-            if (!org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) return;
-            android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            p.setTextSize(dp(10)); p.setColor(org.telegram.messenger.NyxAppearance.color(currentAccount));
-            String label = org.telegram.messenger.NyxAppearance.symbol(currentAccount) + " " + LocaleController.getString(R.string.NyxArchiveDeleted);
-            float x = Math.max(dp(8), Math.min(getTimeX(), getWidth() - p.measureText(label) - dp(10)));
-            canvas.drawText(label, x, getTimeY() + dp(9), p); return;
-        }
-        if (org.telegram.messenger.NyxAppearance.hideTime(currentMessageObject)) return;
+        if(currentMessageObject!=null&&currentMessageObject.nyxDeleted&&!org.telegram.ui.NyxArchiveGate.canShow(currentAccount))return;
+        if((currentMessageObject==null||!currentMessageObject.nyxDeleted)&&org.telegram.messenger.NyxAppearance.hideTime(currentMessageObject))return;
         if (!drawFromPinchToZoom && delegate != null && delegate.getPinchToZoomHelper() != null && delegate.getPinchToZoomHelper().isInOverlayModeFor(this) && shouldDrawTimeOnMedia()) {
             return;
         }
@@ -23969,7 +23973,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     private void drawTimeInternal(Canvas canvas, float alpha, boolean fromParent, float timeX, StaticLayout timeLayout, float timeWidth, boolean drawSelectionBackground) {
-        if ((!drawTime || groupPhotoInvisible) && shouldDrawTimeOnMedia() || timeLayout == null || (currentMessageObject.deleted && currentPosition != null) || currentMessageObject.type == MessageObject.TYPE_PHONE_CALL) {
+        if ((!drawTime || groupPhotoInvisible) && shouldDrawTimeOnMedia() || timeLayout == null || (currentMessageObject.deleted && !currentMessageObject.nyxDeleted && currentPosition != null) || currentMessageObject.type == MessageObject.TYPE_PHONE_CALL) {
             return;
         }
         if (currentMessageObject.type == MessageObject.TYPE_ROUND_VIDEO) {

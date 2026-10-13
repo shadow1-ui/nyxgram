@@ -923,7 +923,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isPremiumUser(TLRPC.User currentUser) {
-        return currentUser != null && currentUser.premium && !isSupportUser(currentUser);
+        return currentUser != null && NyxPremium.displayUser(currentUser,currentAccount) && !isSupportUser(currentUser);
     }
 
     public boolean didPressTranscribeButtonEnough() {
@@ -2604,6 +2604,7 @@ public class MessagesController extends BaseController implements NotificationCe
 
     public void updateEmojiStatus(long dialogId, TLRPC.EmojiStatus newStatus, TL_stars.StarGift gift) {
         final boolean myself = dialogId == 0 || dialogId == getUserConfig().getClientUserId();
+        if(myself && NyxPremium.setStatus(currentAccount,newStatus))return;
         TLRPC.EmojiStatus new_emoji_status = newStatus;
         if (new_emoji_status instanceof TLRPC.TL_inputEmojiStatusCollectible && gift instanceof TL_stars.TL_starGiftUnique) {
             new_emoji_status = emojiStatusCollectibleFromGift((TL_stars.TL_starGiftUnique) gift);

@@ -161,14 +161,14 @@ public class NyxgramActivity extends BaseFragment {
             case 39: presentFragment(new CacheControlActivity()); return;
             case 40: folders(); return;
             case 68: presentFragment(new NyxLocalPinsActivity()); return;
-            case 69: toggle("localPremium",false); break;
+            case 69: NyxPremium.setEnabled(currentAccount,!NyxPremium.enabled(currentAccount)); break;
             case 70: NyxConfig.prefs().edit().putBoolean("nyxStartup",!NyxConfig.prefs().getBoolean("nyxStartup",true)).apply();break;
             case 60: NyxUpdates.check(this, true); return;
             case 61: NyxUpdates.installDownloaded(this); return;
             case 62: NyxConfig.prefs().edit().putBoolean("autoUpdates", !NyxConfig.prefs().getBoolean("autoUpdates", true)).apply(); break;
             case 64: NyxSettingsTransfer.choose(this, true); return;
             case 65: NyxSettingsTransfer.choose(this, false); return;
-            case 80: archiveToggle("keepDeleted"); return;
+            case 80: archiveToggle("keepDeleted"); NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces,MessagesController.UPDATE_MASK_ALL,"nyx_deleted_visibility",getUserConfig().getClientUserId());return;
             case 81: archiveToggle("keepEdits"); return;
             case 82: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.DELETED))); return;
             case 83: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.EDITED))); return;

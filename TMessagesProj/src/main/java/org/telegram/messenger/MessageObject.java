@@ -7632,7 +7632,7 @@ public class MessageObject {
         }
         if (!isMediaEmpty() && !(getMedia(messageOwner) instanceof TLRPC.TL_messageMediaGame) && !TextUtils.isEmpty(text)) {
             caption = Emoji.replaceEmoji(text, Theme.chat_msgTextPaint.getFontMetricsInt(), false);
-            caption = replaceAnimatedEmoji(caption, entities, Theme.chat_msgTextPaint.getFontMetricsInt(), false);
+            caption = replaceAnimatedEmoji(caption, NyxPremium.renderEntities(currentAccount,messageOwner,entities), Theme.chat_msgTextPaint.getFontMetricsInt(), false);
 
             boolean hasEntities;
             if (messageOwner.send_state != MESSAGE_SEND_STATE_SENT) {
@@ -7980,7 +7980,7 @@ public class MessageObject {
     }
 
     public Spannable replaceAnimatedEmoji(CharSequence text, Paint.FontMetricsInt fontMetricsInt) {
-        return replaceAnimatedEmoji(text, getEntities(), fontMetricsInt, false);
+        return replaceAnimatedEmoji(text, NyxPremium.renderEntities(currentAccount,messageOwner,getEntities()), fontMetricsInt, false);
     }
 
     public static Spannable replaceAnimatedEmoji(CharSequence text, ArrayList<TLRPC.MessageEntity> entities, Paint.FontMetricsInt fontMetricsInt) {

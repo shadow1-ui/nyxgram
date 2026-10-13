@@ -11522,7 +11522,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[a].setRightDrawable2(null);
                         nameTextViewRightDrawable2ContentDescription = null;
                     }
-                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {
+                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(org.telegram.messenger.NyxPremium.status(currentAccount,user)) != 0) {
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
                         nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, false, false, a));
@@ -11544,7 +11544,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     } else {
                         nameTextView[a].setRightDrawable2(null);
                     }
-                    if (/*!getMessagesController().premiumFeaturesBlocked() && */user != null && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {
+                    if (/*!getMessagesController().premiumFeaturesBlocked() && */user != null && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(org.telegram.messenger.NyxPremium.status(currentAccount,user)) != 0) {
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
                         nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, true, true, a));
@@ -13518,7 +13518,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (position == nyxIdRow) {
                         String idText = org.telegram.messenger.NyxConfig.get("showId", currentAccount, true) ? "ID: " + (userId != 0 ? userId : chatId) : "";
                         if (org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) idText += (idText.isEmpty() ? "" : " · ") + (nyxPhotoDc() > 0 ? "DC" + nyxPhotoDc() : "DC: —");
-                        if(userId==getUserConfig().getClientUserId() && org.telegram.messenger.NyxConfig.get("localPremium",currentAccount,false))idText+=" · ✦ "+LocaleController.getString(R.string.NyxLocalDecor);
                         detailCell.setTextAndValue(idText, LocaleController.getString(R.string.NyxIdCombined), true);
                     } else if (position == nyxDcRow) {
                         int dc = nyxPhotoDc();

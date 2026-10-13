@@ -711,7 +711,7 @@ public class ContentPreviewViewer {
                 menuVisible = true;
                 containerView.invalidate();
             } else if (currentContentType == CONTENT_TYPE_STICKER) {
-                if (MessageObject.isPremiumSticker(currentDocument) && !AccountInstance.getInstance(currentAccount).getUserConfig().isPremium()) {
+                if (MessageObject.isPremiumSticker(currentDocument) && !org.telegram.messenger.NyxPremium.available(currentAccount)) {
                     showUnlockPremiumView();
                     menuVisible = true;
                     containerView.invalidate();

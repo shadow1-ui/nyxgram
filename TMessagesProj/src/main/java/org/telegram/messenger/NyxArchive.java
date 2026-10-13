@@ -39,6 +39,7 @@ public final class NyxArchive {
         if (m.media != null && m.media.ttl_seconds != 0) return false;
         return m.action == null || m.action instanceof TLRPC.TL_messageActionEmpty;
     }
+    public static boolean eligibleOutgoingEmoji(TLRPC.Message m){return m!=null&&!DialogObject.isEncryptedDialog(MessageObject.getDialogId(m))&&m.ttl==0&&m.ttl_period==0&&(m.media==null||m.media.ttl_seconds==0);}
     private static void open() throws Exception {
         if (db == null) {
             db = ApplicationLoader.applicationContext.openOrCreateDatabase("nyx_archive.db", 0, null);
