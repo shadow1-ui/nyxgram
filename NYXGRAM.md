@@ -1,4 +1,4 @@
-# Nyxgram 0.3 — Android arm64
+# Nyxgram 0.3.1 — Android arm64
 
 ## Scope
 
@@ -39,3 +39,11 @@ Push builds create a **draft** release with APK and checksum manifest. Publicati
 ## QA
 
 Changed Java syntax, resource XML/reference checks and native CI compile-before-native step. Behavior/regression/crypto/transfer invariant tests accompany development. On-device testing is still required for UI layouts, archive lifecycle/PIN/screenshots, media cache behavior, ghost stories from a second account, Android document picker and installer permissions. A successful build is not a claim that these device tests ran.
+
+## Media send preview (0.3.1)
+
+Separate sticker/GIF switches default enabled; existing explicit sticker setting respected. Native ImageReceiver previews static/TGS/video stickers and GIF documents/web inline results. Explicit selected-preview playback is separate from ordinary chat autoplay. Cancel/back/outside dismiss does not send. Primary panel, sticker suggestions and inline-GIF routes intercept before send/input-reset side effects. Central helpers enforce fallback preview for other pickers.
+
+Approval is synchronous, per-thread and scoped to account/peer/exact selected media; inline results with a document normalize to that document. It is passed explicitly through schedule/payment callbacks and removed in finally, not a persisted flag. Completion rechecks foreground fragment/account/owner/dialog. Native rights, payments and scheduling still apply. Receiver stops/clears on dismissal. v1 settings files without the GIF switch import with the default enabled.
+
+Device QA required: static/TGS/video stickers and saved/search GIF animation; Cancel retains reply/text and sends zero messages; Send once; scheduled/paid sends; disabled switches; long-press menus; background/account switches; offline media; no duplicated dialog. Static and CI checks are not device tests.

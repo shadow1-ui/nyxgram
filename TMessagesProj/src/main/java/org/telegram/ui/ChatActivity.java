@@ -7360,16 +7360,7 @@ public class ChatActivity extends BaseFragment implements
                 TLRPC.TL_document document = (TLRPC.TL_document) object;
                 Object parent = mentionContainer.getAdapter().getItemParent(position);
                 String query = MessageObject.findAnimatedEmojiEmoticon(document);
-                AlertsCreator.ensurePaidMessageConfirmation(currentAccount, getDialogId(), 1, price -> {
-                    if (chatMode == MODE_SCHEDULED) {
-                        AlertsCreator.createScheduleDatePickerDialog(getParentActivity(), dialog_id, (notify, scheduleDate, scheduleRepeatPeriod) -> SendMessagesHelper.getInstance(currentAccount).sendSticker(document, query, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, null, notify, scheduleDate, 0, false, parent, getMessageChatSendParams(), 0, getSendMonoForumPeerId(), getSendMessageSuggestionParams()), themeDelegate);
-                    } else {
-                        getSendMessagesHelper().sendSticker(document, query, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, sendAnimationData, true, 0, 0, false, parent, getMessageChatSendParams(), price, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
-                    }
-                    hideFieldPanel(false);
-                    chatActivityEnterView.addStickerToRecent(document);
-                    chatActivityEnterView.setFieldText("");
-                });
+                chatActivityEnterView.onStickerSelected(document,query,parent,sendAnimationData,true,true,0,0);
             } else if (object instanceof TLRPC.Chat) {
                 TLRPC.Chat chat = (TLRPC.Chat) object;
                 if (searchingForUser && searchContainer != null && searchContainer.getVisibility() == View.VISIBLE) {
@@ -12433,6 +12424,12 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void sendBotInlineResult(TLRPC.BotInlineResult result, boolean notify, int scheduleDate, long stars) {
+        if (NyxSendPreview.gif(result) && NyxSendPreview.enabled(currentAccount,result)) {
+            NyxSendPreview.show(this,currentAccount,dialog_id,result,result,()->sendNyxConfirmedInlineResult(result,notify,scheduleDate,stars));return;
+        }
+        sendNyxConfirmedInlineResult(result,notify,scheduleDate,stars);
+    }
+    private void sendNyxConfirmedInlineResult(TLRPC.BotInlineResult result, boolean notify, int scheduleDate, long stars) {
         if (mentionContainer == null) {
             return;
         }
@@ -12442,7 +12439,7 @@ public class ChatActivity extends BaseFragment implements
         params.put("query_id", "" + result.query_id);
         params.put("bot", "" + uid);
         params.put("bot_name", mentionContainer.getAdapter().getContextBotName());
-        SendMessagesHelper.prepareSendingBotContextResult(this, getAccountInstance(), result, params, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, notify, scheduleDate, 0, getMessageChatSendParams(), stars, getSendMonoForumPeerId());
+        NyxSendPreview.withApproval(currentAccount,dialog_id,result,()->SendMessagesHelper.prepareSendingBotContextResult(this, getAccountInstance(), result, params, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, notify, scheduleDate, 0, getMessageChatSendParams(), stars, getSendMonoForumPeerId()));
         chatActivityEnterView.setFieldText("");
         hideFieldPanel(false);
         getMediaDataController().increaseInlineRating(uid);

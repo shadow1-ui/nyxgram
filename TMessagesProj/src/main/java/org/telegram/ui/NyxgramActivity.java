@@ -59,7 +59,8 @@ public class NyxgramActivity extends BaseFragment {
             check(items, 18, R.string.NyxStoryClientGhost, NyxConfig.get("storyGhost", currentAccount, false)); hint(items, R.string.NyxStoryClientHint);
             check(items, 15, R.string.NyxHidePhone, NyxConfig.get("hidePhone", currentAccount, false)); hint(items, R.string.NyxHidePhoneHint);
             check(items, 16, R.string.NyxConfirmCalls, NyxConfig.get("confirmCalls", currentAccount, false)); hint(items, R.string.NyxConfirmCallsHint);
-            check(items, 17, R.string.NyxConfirmStickers, NyxConfig.get("confirmStickers", currentAccount, false)); hint(items, R.string.NyxConfirmStickersHint);
+            check(items, 17, R.string.NyxConfirmStickers, NyxConfig.get("confirmStickers", currentAccount, true)); hint(items, R.string.NyxConfirmStickersHint);
+            check(items, 19, R.string.NyxConfirmGifs, NyxConfig.get("confirmGifs",currentAccount,true));
         } else if (section == 2) {
             check(items, 20, R.string.NyxShowId, NyxConfig.get("showId", currentAccount, true));
             check(items, 21, R.string.NyxShowDc, NyxConfig.get("showDc", currentAccount, true)); hint(items, R.string.NyxDcHint);
@@ -133,7 +134,7 @@ public class NyxgramActivity extends BaseFragment {
             case 14: showDialog(new StealthModeAlert(getContext(), 0, StealthModeAlert.TYPE_FROM_DIALOGS, getResourceProvider())); return;
             case 15: toggle("hidePhone", false); getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_PHONE); break;
             case 16: toggle("confirmCalls", false); break;
-            case 17: toggle("confirmStickers", false); break;
+            case 17: toggle("confirmStickers", true); break;
             case 18:
                 if (NyxConfig.get("storyGhost", currentAccount, false)) toggle("storyGhost", false);
                 else {
@@ -141,6 +142,7 @@ public class NyxgramActivity extends BaseFragment {
                         .setPositiveButton(getString(R.string.NyxEnable), (dialog, which) -> { NyxConfig.set("storyGhost", currentAccount, true); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create()); return;
                 }
                 break;
+            case 19: toggle("confirmGifs",true); break;
             case 20: toggle("showId", true); break;
             case 21: toggle("showDc", true); break;
             case 22: presentFragment(new NyxProfilesActivity()); return;

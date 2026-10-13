@@ -12237,12 +12237,18 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
 
             public void onGifSelected(View view, Object gif, String query, Object parent, boolean notify, int scheduleDate, int scheduleRepeatPeriod, MediaController.PhotoEntry entry, boolean invertMedia) {
+                onGifSelected(view,gif,query,parent,notify,scheduleDate,scheduleRepeatPeriod,entry,invertMedia,false);
+            }
+            private void onGifSelected(View view, Object gif, String query, Object parent, boolean notify, int scheduleDate, int scheduleRepeatPeriod, MediaController.PhotoEntry entry, boolean invertMedia, boolean nyxApproved) {
                 if (replyingQuote != null && parentFragment != null && replyingQuote.outdated) {
                     parentFragment.showQuoteMessageUpdate();
                     return;
                 }
+                if(!nyxApproved && org.telegram.ui.NyxSendPreview.enabled(currentAccount,gif)){
+                    org.telegram.ui.NyxSendPreview.show(parentFragment,currentAccount,dialog_id,gif,parent,()->onGifSelected(view,gif,query,parent,notify,scheduleDate,scheduleRepeatPeriod,entry,invertMedia,true));return;
+                }
                 if (isInScheduleMode() && scheduleDate == 0) {
-                    AlertsCreator.createScheduleDatePickerDialog(parentActivity, parentFragment.getDialogId(), (n, s, r) -> onGifSelected(view, gif, query, parent, n, s, r, entry, invertMedia), resourcesProvider);
+                    AlertsCreator.createScheduleDatePickerDialog(parentActivity, parentFragment.getDialogId(), (n, s, r) -> onGifSelected(view, gif, query, parent, n, s, r, entry, invertMedia, nyxApproved), resourcesProvider);
                 } else {
                     if (slowModeTimer > 0 && !isInScheduleMode()) {
                         if (delegate != null) {
@@ -12342,9 +12348,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                                 delegate.onMessageSend(null, notify, scheduleDate, 0, 0);
                             }
                         };
-                        if (!showConfirmAlert(runnable)) {
-                            runnable.run();
-                        }
+                        Runnable guarded=nyxApproved?()->org.telegram.ui.NyxSendPreview.withApproval(currentAccount,dialog_id,gif,runnable):runnable;
+                        if (!showConfirmAlert(guarded)) guarded.run();
                     });
                 }
             }
@@ -12584,13 +12589,19 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     @Override
     public void onStickerSelected(TLRPC.Document sticker, String query, Object parent, MessageObject.SendAnimationData sendAnimationData, boolean clearsInputField, boolean notify, int scheduleDate, int scheduleRepeatPeriod) {
+        onStickerSelected(sticker,query,parent,sendAnimationData,clearsInputField,notify,scheduleDate,scheduleRepeatPeriod,false);
+    }
+    private void onStickerSelected(TLRPC.Document sticker, String query, Object parent, MessageObject.SendAnimationData sendAnimationData, boolean clearsInputField, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean nyxApproved) {
         if (isLiveComment) return;
         if (replyingQuote != null && parentFragment != null && replyingQuote.outdated) {
             parentFragment.showQuoteMessageUpdate();
             return;
         }
+        if(!nyxApproved && org.telegram.ui.NyxSendPreview.enabled(currentAccount,sticker)){
+            org.telegram.ui.NyxSendPreview.show(parentFragment,currentAccount,dialog_id,sticker,parent,()->onStickerSelected(sticker,query,parent,sendAnimationData,clearsInputField,notify,scheduleDate,scheduleRepeatPeriod,true));return;
+        }
         if (isInScheduleMode() && scheduleDate == 0) {
-            AlertsCreator.createScheduleDatePickerDialog(parentActivity, parentFragment.getDialogId(), (n, s, r) -> onStickerSelected(sticker, query, parent, sendAnimationData, clearsInputField, n, s, r), resourcesProvider);
+            AlertsCreator.createScheduleDatePickerDialog(parentActivity, parentFragment.getDialogId(), (n, s, r) -> onStickerSelected(sticker, query, parent, sendAnimationData, clearsInputField, n, s, r, nyxApproved), resourcesProvider);
         } else {
             AlertsCreator.ensurePaidMessageConfirmation(currentAccount, dialog_id, 1, stars -> {
                 final Runnable runnable = () -> {
@@ -12616,9 +12627,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                     MediaDataController.getInstance(currentAccount).addRecentSticker(MediaDataController.TYPE_IMAGE, parent, sticker, (int) (System.currentTimeMillis() / 1000), false);
                 };
-                if (!showConfirmAlert(runnable)) {
-                    runnable.run();
-                }
+                Runnable guarded=nyxApproved?()->org.telegram.ui.NyxSendPreview.withApproval(currentAccount,dialog_id,sticker,runnable):runnable;
+                if (!showConfirmAlert(guarded)) guarded.run();
             });
         }
     }

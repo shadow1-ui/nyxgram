@@ -1912,16 +1912,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
     public void sendSticker(TLRPC.Document document, String query, long peer, CharSequence caption, VideoEditedInfo videoEditedInfo, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, MessageObject.SendAnimationData sendAnimationData, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean updateStickersOrder, Object parentObject, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId, MessageSuggestionParams suggestionParams, boolean invertMedia) {
         if (document == null) return;
-        if (NyxConfig.get("confirmStickers", currentAccount, false) && (MessageObject.isStickerDocument(document) || MessageObject.isAnimatedStickerDocument(document, true))) {
-            AndroidUtilities.runOnUIThread(() -> {
-                BaseFragment fragment = LaunchActivity.getLastFragmentIncludeMainTabs();
-                // Fail closed: no foreground activity means no confirmed send.
-                if (fragment == null || fragment.getParentActivity() == null || fragment.getCurrentAccount() != currentAccount) return;
-                fragment.showDialog(new AlertDialog.Builder(fragment.getParentActivity())
-                    .setTitle(LocaleController.getString(R.string.NyxTitle)).setMessage(LocaleController.getString(R.string.NyxStickerQuestion))
-                    .setPositiveButton(LocaleController.getString(R.string.NyxSend), (dialog, which) -> sendNyxConfirmedSticker(document, query, peer, caption, videoEditedInfo, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams, invertMedia))
-                    .setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
-            });
+        if (org.telegram.ui.NyxSendPreview.enabled(currentAccount,document) && !org.telegram.ui.NyxSendPreview.approved(currentAccount,peer,document)) {
+            AndroidUtilities.runOnUIThread(() -> org.telegram.ui.NyxSendPreview.show(LaunchActivity.getLastFragmentIncludeMainTabs(),currentAccount,peer,document,parentObject,() -> sendNyxConfirmedSticker(document, query, peer, caption, videoEditedInfo, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams, invertMedia)));
             return;
         }
         sendNyxConfirmedSticker(document, query, peer, caption, videoEditedInfo, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams, invertMedia);
@@ -10062,6 +10054,16 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
     @UiThread
     public static void prepareSendingBotContextResult(BaseFragment fragment, AccountInstance accountInstance, TLRPC.BotInlineResult result, HashMap<String, String> params, long dialogId, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, boolean notify, int scheduleDate, int scheduleRepeatPeriod, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId) {
+        if(result==null)return;
+        int account=accountInstance.getCurrentAccount();
+        if(org.telegram.ui.NyxSendPreview.gif(result) && org.telegram.ui.NyxSendPreview.enabled(account,result) && !org.telegram.ui.NyxSendPreview.approved(account,dialogId,result)){
+            org.telegram.ui.NyxSendPreview.show(fragment,account,dialogId,result,result,()->prepareNyxConfirmedBotContextResult(fragment, accountInstance, result, params, dialogId, replyToMsg, replyToTopMsg, storyItem, quote, notify, scheduleDate, scheduleRepeatPeriod, sendMessageChatArguments, stars, monoForumPeerId));
+            return;
+        }
+        prepareNyxConfirmedBotContextResult(fragment, accountInstance, result, params, dialogId, replyToMsg, replyToTopMsg, storyItem, quote, notify, scheduleDate, scheduleRepeatPeriod, sendMessageChatArguments, stars, monoForumPeerId);
+    }
+
+    private static void prepareNyxConfirmedBotContextResult(BaseFragment fragment, AccountInstance accountInstance, TLRPC.BotInlineResult result, HashMap<String, String> params, long dialogId, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, boolean notify, int scheduleDate, int scheduleRepeatPeriod, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId) {
         if (result == null) {
             return;
         }

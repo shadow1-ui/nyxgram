@@ -11262,8 +11262,8 @@
     <string name="NyxCallQuestion">Вы хотите начать звонок?</string>
     <string name="NyxCall">Позвонить</string>
     <string name="NyxCancel">Отмена</string>
-    <string name="NyxConfirmStickers">Подтверждать отправку стикеров</string>
-    <string name="NyxConfirmStickersHint">Стикер отправляется только после Вашего подтверждения. GIF и эмодзи не затрагиваются.</string>
+    <string name="NyxConfirmStickers">Предпросмотр стикеров перед отправкой</string>
+    <string name="NyxConfirmStickersHint">Откройте анимированный предпросмотр выбранного стикера или GIF. Отправка выполняется только после нажатия «Отправить». Настройки стикеров и GIF включаются отдельно; эмодзи не затрагиваются.</string>
     <string name="NyxStickerQuestion">Вы хотите отправить этот стикер?</string>
     <string name="NyxSend">Отправить</string>
     <string name="NyxShowId">Показывать ID в профилях</string>
@@ -11406,4 +11406,9 @@
     <string name="NyxSavedProfiles">Сохранённые профили</string>
     <string name="NyxProfileUnavailable">Профиль пока недоступен этому аккаунту</string>
     <string name="NyxRemoveBookmark">Удалить локальную закладку профиля?</string>
+    <string name="NyxConfirmGifs">Предпросмотр GIF перед отправкой</string>
+    <string name="NyxStickerPreview">Предпросмотр стикера</string>
+    <string name="NyxGifPreview">Предпросмотр GIF</string>
+    <string name="NyxPreviewLoading">Загрузка предпросмотра…</string>
+    <string name="NyxSendPreviewHint">Нажмите «Отправить» или «Отмена».</string>
 </resources>

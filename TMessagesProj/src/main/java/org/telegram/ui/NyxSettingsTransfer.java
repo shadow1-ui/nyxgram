@@ -15,7 +15,7 @@ import static org.telegram.messenger.LocaleController.getString;
 /** A strict allowlist. No arbitrary preference dump, IDs, account objects, PINs or archives. */
 public final class NyxSettingsTransfer {
     public static final int EXPORT=9930,IMPORT=9931;
-    private static final String[] BOOLS={"hideRead","hideOnline","hideTyping","hidePhone","confirmCalls","confirmStickers","showId","showDc","storyGhost"};
+    private static final String[] BOOLS={"hideRead","hideOnline","hideTyping","hidePhone","confirmCalls","confirmStickers","confirmGifs","showId","showDc","storyGhost"};
     private static final String[] STYLE={"stickerTime","gifTime","roundTime","avatars","dates"};
     public static void choose(BaseFragment f,boolean export){
         Intent intent=new Intent(export?Intent.ACTION_CREATE_DOCUMENT:Intent.ACTION_OPEN_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");
@@ -29,7 +29,7 @@ public final class NyxSettingsTransfer {
             try{
                 if(request==EXPORT){
                     JSONObject o=new JSONObject();o.put("format","nyxgram-settings");o.put("schema",1);
-                    JSONObject p=new JSONObject();for(String k:BOOLS)p.put(k,NyxConfig.get(k,account,k.equals("showId")||k.equals("showDc")));o.put("privacy",p);
+                    JSONObject p=new JSONObject();for(String k:BOOLS)p.put(k,NyxConfig.get(k,account,k.equals("showId")||k.equals("showDc")||k.equals("confirmStickers")||k.equals("confirmGifs")));o.put("privacy",p);
                     JSONObject appearance=new JSONObject();for(String k:STYLE)appearance.put(k,NyxAppearance.get(k));appearance.put("preset",NyxConfig.prefs().getInt("appearance_preset",0));appearance.put("font",SharedConfig.fontSize);appearance.put("radius",SharedConfig.bubbleRadius);o.put("appearance",appearance);
                     o.put("effects",LiteMode.getValue(true)&NyxConfig.EFFECT_FLAGS);o.put("animations",SharedConfig.animationsEnabled());o.put("deletedIcon",NyxConfig.number("deletedIcon",account,0));o.put("deletedColor",NyxAppearance.color(account));
                     try(OutputStream out=ApplicationLoader.applicationContext.getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new IOException("No document stream");out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));}
@@ -55,7 +55,7 @@ public final class NyxSettingsTransfer {
     private static void bool(JSONObject o,String key)throws Exception{if(!(o.get(key) instanceof Boolean))throw new IllegalArgumentException("Invalid switch");}
     private static void validate(JSONObject o)throws Exception{
         if(!"nyxgram-settings".equals(o.getString("format"))||integer(o,"schema",1,1)!=1)throw new IllegalArgumentException("Unsupported settings format");
-        JSONObject p=o.getJSONObject("privacy"),a=o.getJSONObject("appearance");for(String k:BOOLS)bool(p,k);for(String k:STYLE)bool(a,k);bool(o,"animations");
+        JSONObject p=o.getJSONObject("privacy"),a=o.getJSONObject("appearance");if(!p.has("confirmGifs"))p.put("confirmGifs",true);for(String k:BOOLS)bool(p,k);for(String k:STYLE)bool(a,k);bool(o,"animations");
         integer(a,"preset",0,3);integer(a,"font",12,24);integer(a,"radius",0,24);int flags=integer(o,"effects",0,Integer.MAX_VALUE);if((flags&~NyxConfig.EFFECT_FLAGS)!=0)throw new IllegalArgumentException("Unknown effects");integer(o,"deletedIcon",0,3);integer(o,"deletedColor",Integer.MIN_VALUE,-1);
     }
     private static void apply(int account,JSONObject o)throws Exception{
