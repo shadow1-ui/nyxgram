@@ -1418,6 +1418,8 @@ public class MessagesController extends BaseController implements NotificationCe
                 return 0;
             }
         }
+        int localOrder=NyxLocalPins.compare(currentAccount,dialog1.id,dialog2.id);
+        if(localOrder!=0)return localOrder;
         MediaDataController mediaDataController = getMediaDataController();
         long date1 = DialogObject.getLastMessageOrDraftDate(dialog1, mediaDataController.getDraft(dialog1.id, 0));
         long date2 = DialogObject.getLastMessageOrDraftDate(dialog2, mediaDataController.getDraft(dialog2.id, 0));
@@ -1454,6 +1456,8 @@ public class MessagesController extends BaseController implements NotificationCe
                 return 0;
             }
         }
+        int localOrder=NyxLocalPins.compare(currentAccount,dialog1.id,dialog2.id);
+        if(localOrder!=0)return localOrder;
         MediaDataController mediaDataController = getMediaDataController();
         long date1 = DialogObject.getLastMessageOrDraftDate(dialog1, mediaDataController.getDraft(dialog1.id, 0));
         long date2 = DialogObject.getLastMessageOrDraftDate(dialog2, mediaDataController.getDraft(dialog2.id, 0));

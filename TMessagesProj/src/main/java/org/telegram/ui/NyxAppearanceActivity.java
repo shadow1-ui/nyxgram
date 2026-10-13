@@ -15,15 +15,17 @@ import static org.telegram.messenger.LocaleController.getString;
 
 /** Schematic native preview. Draft never touches live settings before Apply. */
 public class NyxAppearanceActivity extends BaseFragment {
-    private final NyxAppearance.Draft draft=new NyxAppearance.Draft();private UniversalRecyclerView list;private Preview preview;
+    private final NyxAppearance.Draft draft=new NyxAppearance.Draft();private UniversalRecyclerView list;private Preview preview;private org.telegram.ui.Cells.AppIconsSelectorCell icons;
     @Override public View createView(Context context){
         actionBar.setTitle(getString(R.string.NyxAppearance));actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick(){@Override public void onItemClick(int id){if(id==-1)finishFragment();}});
         FrameLayout frame=new FrameLayout(context);frame.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));fragmentView=frame;
+        icons=new org.telegram.ui.Cells.AppIconsSelectorCell(context,this,currentAccount);
         preview=new Preview(context);list=new UniversalRecyclerView(context,currentAccount,classGuid,this::fill,this::click,null,getResourceProvider());frame.addView(list,LayoutHelper.createFrame(-1,-1));list.adapter.update(false);return frame;
     }
     private void fill(ArrayList<UItem> items,UniversalAdapter adapter){
         items.add(UItem.asHeader(getString(R.string.NyxPreview)));items.add(UItem.asCustom(preview,300));items.add(UItem.asShadow(getString(R.string.NyxAppearanceHint)));
+        items.add(UItem.asHeader(getString(R.string.NyxFreeIcons)));items.add(UItem.asCustom(icons,112));items.add(UItem.asShadow(getString(R.string.NyxFreeIconsHint)));
         String[] names={getString(R.string.NyxStyleStandard),getString(R.string.NyxStyleNyx),getString(R.string.NyxStyleCompact),getString(R.string.NyxStyleMinimal)};
         items.add(UItem.asButton(1,getString(R.string.NyxStylePreset),names[Math.max(0,Math.min(3,draft.preset))]));
         items.add(UItem.asButton(2,getString(R.string.NyxBubbleRadius),""+draft.radius));items.add(UItem.asButton(3,getString(R.string.NyxFontSize),""+draft.font));

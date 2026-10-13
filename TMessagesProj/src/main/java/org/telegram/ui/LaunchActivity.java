@@ -407,6 +407,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         instance = this;
         ApplicationLoader.postInitApplication();
+        org.telegram.messenger.NyxAppearance.migrateNight();
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -654,6 +655,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         checkLayout();
         checkSystemBarColors();
         handleIntent(getIntent(), false, savedInstanceState != null, false, null, true, true);
+        if(savedInstanceState==null && android.content.Intent.ACTION_MAIN.equals(getIntent().getAction()) && getIntent().hasCategory(android.content.Intent.CATEGORY_LAUNCHER))NyxStartupView.attach(this,frameLayout,currentAccount);
         try {
             String os1 = Build.DISPLAY;
             String os2 = Build.USER;

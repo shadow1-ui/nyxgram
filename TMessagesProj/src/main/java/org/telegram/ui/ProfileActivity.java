@@ -13518,6 +13518,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (position == nyxIdRow) {
                         String idText = org.telegram.messenger.NyxConfig.get("showId", currentAccount, true) ? "ID: " + (userId != 0 ? userId : chatId) : "";
                         if (org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) idText += (idText.isEmpty() ? "" : " · ") + (nyxPhotoDc() > 0 ? "DC" + nyxPhotoDc() : "DC: —");
+                        if(userId==getUserConfig().getClientUserId() && org.telegram.messenger.NyxConfig.get("localPremium",currentAccount,false))idText+=" · ✦ "+LocaleController.getString(R.string.NyxLocalDecor);
                         detailCell.setTextAndValue(idText, LocaleController.getString(R.string.NyxIdCombined), true);
                     } else if (position == nyxDcRow) {
                         int dc = nyxPhotoDc();

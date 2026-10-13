@@ -150,7 +150,7 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
     @SuppressLint("NotifyDataSetChanged")
     private void updateIconsVisibility() {
         availableIcons.clear();
-        availableIcons.addAll(Arrays.asList(LauncherIconController.LauncherIcon.values()));
+        for(LauncherIconController.LauncherIcon icon:LauncherIconController.LauncherIcon.values())if(icon.isNyx())availableIcons.add(icon);
         if (MessagesController.getInstance(currentAccount).premiumFeaturesBlocked()) {
             for (int i = 0; i < availableIcons.size(); i++) {
                 if (availableIcons.get(i).premium) {
@@ -221,6 +221,7 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
             setWillNotDraw(false);
             iconView = new AdaptiveIconImageView(context);
             iconView.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
+            iconView.setBackgroundOuterPadding(0);
             addView(iconView, LayoutHelper.createLinear(58, 58, Gravity.CENTER_HORIZONTAL));
 
             titleView = new TextView(context);

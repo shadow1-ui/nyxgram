@@ -116,7 +116,7 @@ public final class NyxConfig {
         setLite(account, false);
         NyxAppearance.restore();
         SharedPreferences.Editor e = prefs().edit();
-        for (String key : new String[]{"hideRead", "hideOnline", "hideTyping", "hidePhone", "confirmCalls", "confirmStickers", "confirmGifs", "showId", "showDc", "startupFolder", "storyGhost"}) {
+        for (String key : new String[]{"localPremium", "hideRead", "hideOnline", "hideTyping", "hidePhone", "confirmCalls", "confirmStickers", "confirmGifs", "showId", "showDc", "startupFolder", "storyGhost"}) {
             e.remove(key + "_" + account);
         }
         e.apply();

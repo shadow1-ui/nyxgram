@@ -209,6 +209,67 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity-alias>
 
+        <activity-alias android:name="org.telegram.messenger.NyxVoidIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_void" android:roundIcon="@mipmap/nyx_void" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxAuroraIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_aurora" android:roundIcon="@mipmap/nyx_aurora" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxNebulaIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_nebula" android:roundIcon="@mipmap/nyx_nebula" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxEclipseIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_eclipse" android:roundIcon="@mipmap/nyx_eclipse" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxLunarIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_lunar" android:roundIcon="@mipmap/nyx_lunar" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxMidnightIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_midnight" android:roundIcon="@mipmap/nyx_midnight" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxEmberIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_ember" android:roundIcon="@mipmap/nyx_ember" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxFrostIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_frost" android:roundIcon="@mipmap/nyx_frost" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxRoseIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_rose" android:roundIcon="@mipmap/nyx_rose" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxJadeIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_jade" android:roundIcon="@mipmap/nyx_jade" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxSolarIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_solar" android:roundIcon="@mipmap/nyx_solar" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxOrbitIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_orbit" android:roundIcon="@mipmap/nyx_orbit" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxPrismIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_prism" android:roundIcon="@mipmap/nyx_prism" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxObsidianIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_obsidian" android:roundIcon="@mipmap/nyx_obsidian" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+        <activity-alias android:name="org.telegram.messenger.NyxPaperIcon" android:enabled="false" android:targetActivity="org.telegram.ui.LaunchActivity" android:icon="@mipmap/nyx_paper" android:roundIcon="@mipmap/nyx_paper" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
         <activity
             android:name="org.telegram.ui.LaunchActivity"
             android:theme="@style/Theme.TMessages.Start"

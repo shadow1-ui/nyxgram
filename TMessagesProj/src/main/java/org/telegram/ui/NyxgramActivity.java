@@ -45,6 +45,9 @@ public class NyxgramActivity extends BaseFragment {
             items.add(UItem.asButton(2, getString(R.string.NyxInfo)));
             items.add(UItem.asButton(5, getString(R.string.NyxHistory)));
             items.add(UItem.asButton(90, getString(R.string.NyxAppearance)));
+            check(items, 69, R.string.NyxLocalPremium, NyxConfig.get("localPremium",currentAccount,false));hint(items,R.string.NyxLocalPremiumHint);
+            check(items, 70, R.string.NyxStartup, NyxConfig.prefs().getBoolean("nyxStartup",true));
+            items.add(UItem.asButton(68,getString(R.string.NyxLocalPins)));
             items.add(UItem.asButton(3, getString(R.string.NyxPerformance)));
             items.add(UItem.asButton(6, getString(R.string.NyxUpdates)));
             items.add(UItem.asButton(4, getString(R.string.NyxAbout)));
@@ -157,6 +160,9 @@ public class NyxgramActivity extends BaseFragment {
             case 38: presentFragment(new DataSettingsActivity()); return;
             case 39: presentFragment(new CacheControlActivity()); return;
             case 40: folders(); return;
+            case 68: presentFragment(new NyxLocalPinsActivity()); return;
+            case 69: toggle("localPremium",false); break;
+            case 70: NyxConfig.prefs().edit().putBoolean("nyxStartup",!NyxConfig.prefs().getBoolean("nyxStartup",true)).apply();break;
             case 60: NyxUpdates.check(this, true); return;
             case 61: NyxUpdates.installDownloaded(this); return;
             case 62: NyxConfig.prefs().edit().putBoolean("autoUpdates", !NyxConfig.prefs().getBoolean("autoUpdates", true)).apply(); break;

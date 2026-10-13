@@ -3959,6 +3959,8 @@ public class ChatActivity extends BaseFragment implements
                                 if (getParentActivity() != null) Toast.makeText(getParentActivity(), LocaleController.getString(ok ? R.string.NyxReadSent : R.string.NyxReadError), Toast.LENGTH_SHORT).show();
                             });
                         }).setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
+                } else if (id == 9906) {
+                    if(!org.telegram.messenger.NyxLocalPins.toggle(currentAccount,dialog_id))Toast.makeText(getParentActivity(),LocaleController.getString(R.string.NyxPinsLimit),Toast.LENGTH_LONG).show();
                 } else if (id == 9904) {
                     NyxArchiveGate.require(currentAccount, ChatActivity.this, () -> presentFragment(new NyxArchiveActivity(dialog_id, org.telegram.messenger.NyxArchive.DELETED)));
                 } else if (id == 9905) {
@@ -4336,6 +4338,7 @@ public class ChatActivity extends BaseFragment implements
             }
             headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
             if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                if(threadMessageId==0)headerItem.lazilyAddSubItem(9906,R.drawable.msg_pin,LocaleController.getString(org.telegram.messenger.NyxLocalPins.contains(currentAccount,dialog_id)?R.string.NyxLocalUnpin:R.string.NyxLocalPin));
                 headerItem.lazilyAddSubItem(9904, R.drawable.msg_markread, LocaleController.getString(R.string.NyxHistoryForChat));
                 headerItem.lazilyAddSubItem(9905, R.drawable.msg_markread, LocaleController.getString(R.string.NyxEditsArchive));
             }
@@ -4520,6 +4523,7 @@ public class ChatActivity extends BaseFragment implements
             }
             headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
             if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                if(threadMessageId==0)headerItem.lazilyAddSubItem(9906,R.drawable.msg_pin,LocaleController.getString(org.telegram.messenger.NyxLocalPins.contains(currentAccount,dialog_id)?R.string.NyxLocalUnpin:R.string.NyxLocalPin));
                 headerItem.lazilyAddSubItem(9904, R.drawable.msg_markread, LocaleController.getString(R.string.NyxHistoryForChat));
                 headerItem.lazilyAddSubItem(9905, R.drawable.msg_markread, LocaleController.getString(R.string.NyxEditsArchive));
             }

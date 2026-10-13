@@ -24,7 +24,7 @@ import static org.telegram.messenger.LocaleController.getString;
 
 /** Public stable Releases only. No GitHub token is shipped. Checksum + package + signer verification before install. */
 public final class NyxUpdates {
-    public static final String VERSION="0.3.1";
+    public static final String VERSION="0.4";
     private static final AtomicBoolean checking=new AtomicBoolean(),downloading=new AtomicBoolean();
     private static final DispatchQueue worker=new DispatchQueue("nyx-updates");
     private static Context context(){return ApplicationLoader.applicationContext;}
