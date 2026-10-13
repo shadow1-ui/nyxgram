@@ -7,7 +7,7 @@ import org.telegram.ui.Components.AnimatedEmojiDrawable;
 /** Nyx preferences never contain credentials or message contents. */
 public final class NyxConfig {
     private NyxConfig() {}
-    private static SharedPreferences prefs() {
+    public static SharedPreferences prefs() {
         return ApplicationLoader.applicationContext.getSharedPreferences("nyxgram", Context.MODE_PRIVATE);
     }
     public static boolean get(String key, int account, boolean fallback) {
@@ -16,6 +16,8 @@ public final class NyxConfig {
     public static void set(String key, int account, boolean value) {
         prefs().edit().putBoolean(key + "_" + account, value).apply();
     }
+    public static int number(String key, int account, int fallback) { return prefs().getInt(key + "_" + account, fallback); }
+    public static void setNumber(String key, int account, int value) { prefs().edit().putInt(key + "_" + account, value).apply(); }
     public static boolean hideRead(int account) { return get("hideRead", account, false); }
     public static boolean hideOnline(int account) { return get("hideOnline", account, false); }
     public static boolean hideTyping(int account) { return get("hideTyping", account, false); }
@@ -112,8 +114,9 @@ public final class NyxConfig {
     }
     public static void reset(int account) {
         setLite(account, false);
+        NyxAppearance.restore();
         SharedPreferences.Editor e = prefs().edit();
-        for (String key : new String[]{"hideRead", "hideOnline", "hideTyping", "hidePhone", "confirmCalls", "confirmStickers", "showId", "showDc", "startupFolder"}) {
+        for (String key : new String[]{"hideRead", "hideOnline", "hideTyping", "hidePhone", "confirmCalls", "confirmStickers", "showId", "showDc", "startupFolder", "storyGhost"}) {
             e.remove(key + "_" + account);
         }
         e.apply();

@@ -1,42 +1,41 @@
-# Nyxgram 0.2 (Android / arm64)
+# Nyxgram 0.3 — Android arm64
 
-Independent Telegram fork. Update installs over the initial Nyxgram APK with the same signing key. Do not uninstall to update.
+## Scope
 
-## Features
+Includes the user's next feature set and optional ideas A/G/D/E/J only: edit history, archive search, appearance preview, allowlisted settings transfer and archive PIN gate. It does not add per-chat ghost exceptions, custom local contact names or lightweight-mode per-media exceptions.
 
-- Settings → Nyxgram: Privacy, Information, Performance, About.
-- User/chat/channel internal MTProto IDs and profile-photo DC in profiles, tap to copy.
-- Separate username and public-profile-link copy actions (only for public usernames).
-- Account-local read receipt, online status, typing/action suppression; all off by default.
-- Quick ghost toggle in the home overflow menu and chat menu.
-- Explicit manual server read action in a normal chat, with confirmation and server error reporting.
-- Official Premium story-stealth entry point (server rules unchanged).
-- Own-phone masking on the main settings/account/profile screens; number-change/security screens are not a privacy boundary.
-- Confirmation before private calls and group-call creation/joining.
-- Confirmation before ordinary static, animated and video sticker sends.
-- Lightweight preset and individual native effect/media autoplay toggles; no duplicate shadow performance settings.
-- Disable media autodownload for mobile, Wi-Fi and roaming; open native settings for granular limits.
-- Native cache management shortcut. No silent cache deletion.
-- Preferred startup folder by server filter ID. Deleted/locked folders fall back to All Chats.
-- Nyx settings reset with confirmation, preserving chats/files and other accounts' privacy preferences.
-- Formal Russian Nyx UI. Native Telegram dialogs follow the chosen app language.
+### Profiles
 
-## Privacy limits
+One ID/DC row; normal tap copies only the raw internal MTProto peer ID. DC is photo storage DC and cannot classify physical/virtual phone numbers. Unknown DC shows a dash. Existing username row opens copy username/public link/ID link/bookmark choices. Long press on the ID row works without a username. `tg://openmessage?user_id=...&nyxprofile=1` routes to a Nyxgram profile. Other clients may ignore the profile parameter. Existing cached profile access is required, and account deletion/access loss is not bypassed. Local bookmarks are scoped to the signed-in user's ID and capped at 200.
 
-This is not an anonymity tool. Sending messages/calling/other sessions can reveal activity. Story or channel views are not hidden by chat ghost mode. Story stealth requires official Telegram Premium support and follows Telegram cooldown/duration rules.
+### Local history
 
-Secret chats, disappearing/view-once media and known auto-delete chats keep original receipt/timer behavior. Local read state can differ from server state. Voice playback receipts are not resent by the manual chat-read button. Bot stream-stop control and live group-call speaking signaling keep their original behavior. App restart clears the bounded suppressed-read task cache; manually reading still works for messages currently loaded in the chat.
+Recording defaults off. Independent SQLite snapshots/history, with each serialized message body encrypted using AndroidKeyStore AES-256-GCM and owner/dialog/message/kind AAD. Code protection is a separate UI gate, not PIN-derived encryption. Native Telegram database deletion is not bypassed. Native storage queue copies snapshots before writes/deletions. Edit history compares previous text/media identity; formatting-only edits are not guaranteed. Only locally available previous versions can be saved.
 
-DC is **photo storage DC**, not authoritative account DC. IDs shown are internal MTProto peer IDs (not Bot API signed chat IDs). Username links are public profiles, not private invitation links.
+Secret chats, service messages, messages with TTL/TTL-period, and view-once/disappearing media are excluded. No automatic media downloading/copying. Chat rendering restores only available cached media; missing files become a local placeholder. Archive entries are local read-only copies, not sent/forwarded/edited on Telegram. Normal non-thread chat pages merge deleted copies within the loaded range; an empty page may show recent local deletions. Topics/merged migration histories use the separate archive screen.
 
-Effects are application-global; autodownload/privacy/default-folder preferences are account-local. Reset restores an effects snapshot for the whole application and an autodownload-enabled snapshot for the current account. It does not clear native cache, account privacy settings, messages or sign-in data.
+Search decrypts locally on a dedicated queue. 100-entry pages, owner isolation, default 30-day retention; configurable 7/30/90/365/no deadline, still bounded to 8,000 snapshots and 3,000 history rows per owner. Disabling recording does not erase history. Clear removes both snapshots and history. Unknown callbacks/reused account slots cannot display another owner's data.
 
-Deleted-message history and protected-content features are **not included** in this version.
+Archive/PIN/preferences/downloads are excluded from Android full backup and device transfer. No archive data/keys/PIN verifiers are included in settings exports. Normal Telegram backup handling is otherwise preserved.
 
-## Validation
+PIN: 4–12 digits, 24-byte salt, PBKDF2-HMAC-SHA1 (210,000 iterations, 256-bit verifier), constant-time equality, persisted throttling after five failures. Five-minute UI session, closed on app background. Locked chat rows show a placeholder and suppress plaintext accessibility nodes/touches. Protected dialogs close on relock. Protected archive/chat windows use FLAG_SECURE; forgetting a PIN requires deleting all accounts' local history before clearing the verifier. This is not protection against a rooted/compromised device.
 
-- Changed Java files: parser syntax validation.
-- Strings XML: parse/unique-name/reference checks.
-- NyxConfig: 19 isolated behavior assertions (defaults, account isolation, ghost bundle, native state, preserving unrelated flags, exact restore, reset, phone masking, startup folder).
-- CI compiles Java before the native release build (fail-fast).
-- Device validation still required: login, ordinary messaging, ghost mode vs. another account, voice/view-once/secret-chat timers, stickers cancel/send, calls cancel/start, folder cold start, performance restore, and installation over the previous signed APK.
+### Appearance / settings transfer
+
+Application-global style state; native Telegram font/radius settings. Staged schematic preview, Apply-only mutation, Standard/Nyx/Compact/Minimal presets. Nyx imports a local static night theme, without cloud theme publication. Time/status hiding does not hide sending/error states. Date separators can be visually hidden, not server-deleted. Appearance restore keeps the original local theme/font/radius.
+
+JSON export/import uses Android document picker, schema version 1, strict known-value/type/range checks, 64 KiB limit and explicit import confirmation. Only UI/native effect/plain privacy switches and deletion marker appearance are transferred. Recording flags, PIN/protection, messages, owners, saved profiles, folder IDs, restore snapshots and auth material are excluded. Unknown fields are never applied.
+
+### Stories
+
+Experimental client-side suppression guards both `stories.readStories` and `stories.incrementStoryViews`; local read bookkeeping continues, so suppressed views are not automatically replayed later. No Premium entitlement is forged. Server-backed Premium stealth is still available separately. Reactions/replies and other clients can reveal activity. Real second-account verification remains necessary; no anonymity guarantee.
+
+### Updates
+
+Only `shadow1-ui/nyxgram` published, non-prerelease latest release; no GitHub token in APK. TLS host allowlist, bounded metadata/file sizes, SHA-256, exact application ID/version and installed signer match before showing system installer. Files stay in a private whitelisted FileProvider directory. Installation requires user confirmation and Android permission. Monotonic CI versionCode derives from run number. The first updater-enabled APK must be installed manually.
+
+Push builds create a **draft** release with APK and checksum manifest. Publication is explicit (`publish_release` manual dispatch or promotion of a tested draft), preventing untested builds from automatically appearing in the updater. Existing installed users see only published stable releases.
+
+## QA
+
+Changed Java syntax, resource XML/reference checks and native CI compile-before-native step. Behavior/regression/crypto/transfer invariant tests accompany development. On-device testing is still required for UI layouts, archive lifecycle/PIN/screenshots, media cache behavior, ghost stories from a second account, Android document picker and installer permissions. A successful build is not a claim that these device tests ran.

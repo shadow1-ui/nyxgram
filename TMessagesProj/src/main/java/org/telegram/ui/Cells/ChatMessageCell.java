@@ -4913,6 +4913,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (currentMessageObject != null && currentMessageObject.nyxDeleted && !org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                org.telegram.ui.ActionBar.BaseFragment fragment = org.telegram.ui.LaunchActivity.getLastFragmentIncludeMainTabs();
+                if (fragment != null) org.telegram.ui.NyxArchiveGate.require(currentAccount, fragment, this::invalidate);
+            }
+            return true;
+        }
         if (currentMessageObject == null || delegate != null && !delegate.canPerformActions() || animationRunning) {
             if (currentMessageObject != null && currentMessageObject.preview) {
                 return checkTextSelection(event);
@@ -6949,6 +6956,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             if (messageObject.customAvatarDrawable != null || messageObject.forceAvatar || messageObject.messageOwner.guestchat_via_from != null) {
                 isAvatarVisible = true;
                 drawAvatar = true;
+            }
+            if (isChat && !messageObject.isOutOwner() && org.telegram.messenger.NyxAppearance.get("avatars")) {
+                isAvatarVisible = false; drawAvatar = false;
             }
             wasLayout = false;
             groupPhotoInvisible = false;
@@ -20134,6 +20144,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         drawInternal(canvas);
     }
     public void drawInternal(Canvas canvas) {
+        if (currentMessageObject != null && currentMessageObject.nyxDeleted && !org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) {
+            canvas.drawColor(getThemedColor(Theme.key_windowBackgroundWhite));
+            android.graphics.Paint locked = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            locked.setTextSize(dp(14)); locked.setColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
+            canvas.drawText(LocaleController.getString(R.string.NyxArchiveLocked), dp(16), Math.max(dp(22), getHeight()/2f), locked);
+            return;
+        }
         if (currentMessageObject == null) {
             return;
         }
@@ -23866,6 +23883,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     public void drawTime(Canvas canvas, float alpha, boolean fromParent) {
+        if (currentMessageObject != null && currentMessageObject.nyxDeleted) {
+            if (!org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) return;
+            android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            p.setTextSize(dp(10)); p.setColor(org.telegram.messenger.NyxAppearance.color(currentAccount));
+            String label = org.telegram.messenger.NyxAppearance.symbol(currentAccount) + " " + LocaleController.getString(R.string.NyxArchiveDeleted);
+            float x = Math.max(dp(8), Math.min(getTimeX(), getWidth() - p.measureText(label) - dp(10)));
+            canvas.drawText(label, x, getTimeY() + dp(9), p); return;
+        }
+        if (org.telegram.messenger.NyxAppearance.hideTime(currentMessageObject)) return;
         if (!drawFromPinchToZoom && delegate != null && delegate.getPinchToZoomHelper() != null && delegate.getPinchToZoomHelper().isInOverlayModeFor(this) && shouldDrawTimeOnMedia()) {
             return;
         }
@@ -26684,10 +26710,14 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
+        if (currentMessageObject != null && currentMessageObject.nyxDeleted && !org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) {
+            info.setText(LocaleController.getString(R.string.NyxArchiveLocked)); info.setContentDescription(LocaleController.getString(R.string.NyxArchiveLocked));
+        }
     }
 
     @Override
     public AccessibilityNodeProvider getAccessibilityNodeProvider() {
+        if (currentMessageObject != null && currentMessageObject.nyxDeleted && !org.telegram.ui.NyxArchiveGate.canShow(currentAccount)) return null;
         return new MessageAccessibilityNodeProvider();
     }
 

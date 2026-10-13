@@ -20,7 +20,7 @@ public class NyxgramActivity extends BaseFragment {
     public NyxgramActivity(int section) { this.section = section; }
     @Override public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
-        int[] titles = {R.string.NyxTitle, R.string.NyxPrivacy, R.string.NyxInfo, R.string.NyxPerformance, R.string.NyxAbout};
+        int[] titles = {R.string.NyxTitle, R.string.NyxPrivacy, R.string.NyxProfileLinks, R.string.NyxPerformance, R.string.NyxAbout, R.string.NyxHistory, R.string.NyxUpdates};
         actionBar.setTitle(getString(titles[section]));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override public void onItemClick(int id) { if (id == -1) finishFragment(); }
@@ -43,7 +43,10 @@ public class NyxgramActivity extends BaseFragment {
             hint(items, R.string.NyxGhostHint);
             items.add(UItem.asButton(1, getString(R.string.NyxPrivacy)));
             items.add(UItem.asButton(2, getString(R.string.NyxInfo)));
+            items.add(UItem.asButton(5, getString(R.string.NyxHistory)));
+            items.add(UItem.asButton(90, getString(R.string.NyxAppearance)));
             items.add(UItem.asButton(3, getString(R.string.NyxPerformance)));
+            items.add(UItem.asButton(6, getString(R.string.NyxUpdates)));
             items.add(UItem.asButton(4, getString(R.string.NyxAbout)));
             items.add(UItem.asShadow(null));
             items.add(UItem.asButton(40, getString(R.string.NyxStartupFolder), folderName()));
@@ -53,13 +56,15 @@ public class NyxgramActivity extends BaseFragment {
             check(items, 12, R.string.NyxHideOnline, NyxConfig.hideOnline(currentAccount)); hint(items, R.string.NyxHideOnlineHint);
             check(items, 13, R.string.NyxHideTyping, NyxConfig.hideTyping(currentAccount)); hint(items, R.string.NyxHideTypingHint);
             items.add(UItem.asButton(14, getString(R.string.NyxStories))); hint(items, R.string.NyxStoriesHint);
+            check(items, 18, R.string.NyxStoryClientGhost, NyxConfig.get("storyGhost", currentAccount, false)); hint(items, R.string.NyxStoryClientHint);
             check(items, 15, R.string.NyxHidePhone, NyxConfig.get("hidePhone", currentAccount, false)); hint(items, R.string.NyxHidePhoneHint);
             check(items, 16, R.string.NyxConfirmCalls, NyxConfig.get("confirmCalls", currentAccount, false)); hint(items, R.string.NyxConfirmCallsHint);
             check(items, 17, R.string.NyxConfirmStickers, NyxConfig.get("confirmStickers", currentAccount, false)); hint(items, R.string.NyxConfirmStickersHint);
         } else if (section == 2) {
             check(items, 20, R.string.NyxShowId, NyxConfig.get("showId", currentAccount, true));
             check(items, 21, R.string.NyxShowDc, NyxConfig.get("showDc", currentAccount, true)); hint(items, R.string.NyxDcHint);
-            hint(items, R.string.NyxCopyHint);
+            hint(items, R.string.NyxProfileLinkHint);
+            items.add(UItem.asButton(22, getString(R.string.NyxSavedProfiles)));
         } else if (section == 3) {
             check(items, 30, R.string.NyxLite, NyxConfig.lite(currentAccount)); hint(items, R.string.NyxLiteHint);
             check(items, 31, R.string.NyxNoBlur, NyxConfig.disabled(NyxConfig.BLUR_FLAGS));
@@ -72,9 +77,30 @@ public class NyxgramActivity extends BaseFragment {
             items.add(UItem.asButton(38, getString(R.string.NyxMediaSettings)));
             items.add(UItem.asButton(39, getString(R.string.NyxCache)));
             items.add(UItem.asShadow(null));
+        } else if (section == 5) {
+            check(items, 80, R.string.NyxKeepDeleted, NyxConfig.get("keepDeleted", currentAccount, false));
+            check(items, 81, R.string.NyxKeepEdits, NyxConfig.get("keepEdits", currentAccount, false)); hint(items, R.string.NyxArchiveHint);
+            items.add(UItem.asButton(82, getString(R.string.NyxDeletedArchive)));
+            items.add(UItem.asButton(83, getString(R.string.NyxEditsArchive)));
+            items.add(UItem.asShadow(null));
+            check(items, 84, R.string.NyxProtectArchive, NyxConfig.get("protectArchive", currentAccount, false));
+            items.add(UItem.asButton(89, getString(R.string.NyxLockNow))); hint(items, R.string.NyxPinHint);
+            int days = NyxConfig.number("retention", currentAccount, 30);
+            items.add(UItem.asButton(85, getString(R.string.NyxArchiveRetention), days == 0 ? getString(R.string.NyxRetentionForever) : days + " дн."));
+            items.add(UItem.asButton(86, getString(R.string.NyxArchiveMark), NyxAppearance.symbol(currentAccount)));
+            items.add(UItem.asButton(87, getString(R.string.NyxArchiveColor)));
+            hint(items, R.string.NyxArchiveLimitHint);
+            items.add(UItem.asButton(88, getString(R.string.NyxArchiveClear)));
+        } else if (section == 6) {
+            check(items, 62, R.string.NyxAutoUpdates, NyxConfig.prefs().getBoolean("autoUpdates", true));
+            items.add(UItem.asButton(60, getString(R.string.NyxCheckUpdates)));
+            items.add(UItem.asButton(61, getString(R.string.NyxUpdateInstall)));
+            hint(items, R.string.NyxUpdateHint);
         } else {
             hint(items, R.string.NyxAboutHint);
-            items.add(UItem.asButton(-50, "Nyxgram 0.2 · Telegram " + BuildVars.BUILD_VERSION_STRING));
+            items.add(UItem.asButton(-50, "Nyxgram " + NyxUpdates.VERSION + " · Telegram " + BuildVars.BUILD_VERSION_STRING));
+            items.add(UItem.asButton(64, getString(R.string.NyxExport)));
+            items.add(UItem.asButton(65, getString(R.string.NyxImport))); hint(items, R.string.NyxTransferHint);
             items.add(UItem.asButton(50, getString(R.string.NyxReset)));
         }
     }
@@ -99,7 +125,7 @@ public class NyxgramActivity extends BaseFragment {
     private void toggle(String key, boolean fallback) { NyxConfig.set(key, currentAccount, !NyxConfig.get(key, currentAccount, fallback)); }
     private void onClick(UItem item, View view, int position, float x, float y) {
         switch (item.id) {
-            case 1: case 2: case 3: case 4: presentFragment(new NyxgramActivity(item.id)); return;
+            case 1: case 2: case 3: case 4: case 5: case 6: presentFragment(new NyxgramActivity(item.id)); return;
             case 10: NyxConfig.setGhost(currentAccount, !NyxConfig.ghost(currentAccount)); break;
             case 11: toggle("hideRead", false); break;
             case 12: toggle("hideOnline", false); getMessagesController().updateNyxOnlineState(); break;
@@ -108,8 +134,16 @@ public class NyxgramActivity extends BaseFragment {
             case 15: toggle("hidePhone", false); getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_PHONE); break;
             case 16: toggle("confirmCalls", false); break;
             case 17: toggle("confirmStickers", false); break;
+            case 18:
+                if (NyxConfig.get("storyGhost", currentAccount, false)) toggle("storyGhost", false);
+                else {
+                    showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(R.string.NyxStoryClientGhost)).setMessage(getString(R.string.NyxStoryClientHint))
+                        .setPositiveButton(getString(R.string.NyxEnable), (dialog, which) -> { NyxConfig.set("storyGhost", currentAccount, true); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create()); return;
+                }
+                break;
             case 20: toggle("showId", true); break;
             case 21: toggle("showDc", true); break;
+            case 22: presentFragment(new NyxProfilesActivity()); return;
             case 30: NyxConfig.setLite(currentAccount, !NyxConfig.lite(currentAccount)); break;
             case 31: NyxConfig.setDisabled(NyxConfig.BLUR_FLAGS, !NyxConfig.disabled(NyxConfig.BLUR_FLAGS)); break;
             case 32: NyxConfig.setNoAnimations(!NyxConfig.noAnimations()); break;
@@ -121,6 +155,23 @@ public class NyxgramActivity extends BaseFragment {
             case 38: presentFragment(new DataSettingsActivity()); return;
             case 39: presentFragment(new CacheControlActivity()); return;
             case 40: folders(); return;
+            case 60: NyxUpdates.check(this, true); return;
+            case 61: NyxUpdates.installDownloaded(this); return;
+            case 62: NyxConfig.prefs().edit().putBoolean("autoUpdates", !NyxConfig.prefs().getBoolean("autoUpdates", true)).apply(); break;
+            case 64: NyxSettingsTransfer.choose(this, true); return;
+            case 65: NyxSettingsTransfer.choose(this, false); return;
+            case 80: archiveToggle("keepDeleted"); return;
+            case 81: archiveToggle("keepEdits"); return;
+            case 82: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.DELETED))); return;
+            case 83: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.EDITED))); return;
+            case 84: NyxArchiveGate.authorize(currentAccount, this, () -> { toggle("protectArchive", false); listView.adapter.update(false); }); return;
+            case 85: chooseNumber("retention", new int[]{7, 30, 90, 365, 0}, new String[]{getString(R.string.NyxDays7), getString(R.string.NyxDays30), getString(R.string.NyxDays90), getString(R.string.NyxDays365), getString(R.string.NyxRetentionForever)}, R.string.NyxArchiveRetention); return;
+            case 86: chooseNumber("deletedIcon", new int[]{0,1,2,3}, new String[]{"✕", "⌫", "●", "▱"}, R.string.NyxArchiveMark); return;
+            case 87: chooseNumber("deletedColor", new int[]{0xFFD976A6,0xFFA98BFA,0xFF70D9E8,0xFFEF7878}, new String[]{getString(R.string.NyxPink),getString(R.string.NyxPurple),getString(R.string.NyxCyan),getString(R.string.NyxRed)}, R.string.NyxArchiveColor); return;
+            case 88: NyxArchiveGate.require(currentAccount, this, () -> showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(R.string.NyxArchiveClear)).setMessage(getString(R.string.NyxArchiveClearAsk))
+                .setPositiveButton(getString(R.string.NyxResetAction), (d,w) -> NyxArchive.clear(currentAccount, false, () -> Toast.makeText(getParentActivity(),getString(R.string.NyxDone),Toast.LENGTH_SHORT).show())).setNegativeButton(getString(R.string.NyxCancel), null).create())); return;
+            case 89: NyxArchiveGate.lock(); break;
+            case 90: presentFragment(new NyxAppearanceActivity()); return;
             case 50:
                 showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(R.string.NyxReset))
                     .setMessage(getString(R.string.NyxResetQuestion))
@@ -131,6 +182,17 @@ public class NyxgramActivity extends BaseFragment {
             default: return;
         }
         listView.adapter.update(true);
+    }
+    private void archiveToggle(String key) {
+        if (NyxConfig.get(key, currentAccount, false)) { NyxConfig.set(key, currentAccount, false); listView.adapter.update(false); return; }
+        showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(R.string.NyxHistory)).setMessage(getString(R.string.NyxArchiveConsent))
+            .setPositiveButton(getString(R.string.NyxEnable), (d,w) -> { NyxConfig.set(key, currentAccount, true); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
+    }
+    private void chooseNumber(String key, int[] numbers, String[] labels, int title) {
+        showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(title)).setItems(labels, (d,n) -> { NyxConfig.setNumber(key, currentAccount, numbers[n]); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
+    }
+    @Override public void onActivityResultFragment(int request, int result, android.content.Intent data) {
+        if (!NyxSettingsTransfer.result(this, request, result, data)) super.onActivityResultFragment(request, result, data);
     }
     @Override public void onResume() { super.onResume(); if (listView != null) listView.adapter.update(false); }
 }

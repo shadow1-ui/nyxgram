@@ -4445,7 +4445,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
             } else if (position == nyxIdRow || position == nyxDcRow || position == nyxUsernameRow || position == nyxLinkRow) {
                 String value;
-                if (position == nyxIdRow) value = Long.toString(userId != 0 ? userId : chatId);
+                if (position == nyxIdRow) {
+                    if (!org.telegram.messenger.NyxConfig.get("showId", currentAccount, true)) return;
+                    value = Long.toString(userId != 0 ? userId : chatId);
+                }
                 else if (position == nyxDcRow) {
                     if (nyxPhotoDc() <= 0) return;
                     value = "DC" + nyxPhotoDc();
@@ -4487,6 +4490,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 onMemberClick(participant, false, view);
             } else if (position == addMemberRow) {
                 openAddMember();
+            } else if (position == usernameRow && !isTopic) {
+                nyxProfileLinks();
             } else if (position == usernameRow) {
                 processOnClickOrPress(position, view, x, y);
             } else if (position == linkedCommunityRow) {
@@ -7300,6 +7305,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     }
 
     private boolean processOnClickOrPress(final int position, final View view, final float x, final float y) {
+        if (position == nyxIdRow) { nyxProfileLinks(); return true; }
         if (position == usernameRow || position == setUsernameRow) {
             final String username;
             final TLRPC.TL_username usernameObj;
@@ -10468,9 +10474,27 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         return chat == null || chat.photo == null ? 0 : chat.photo.dc_id;
     }
     private void addNyxInfoRows() {
-        if (org.telegram.messenger.NyxConfig.get("showId", currentAccount, true)) nyxIdRow = rowCount++;
-        if (org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) nyxDcRow = rowCount++;
-        if (!TextUtils.isEmpty(nyxUsername())) { nyxUsernameRow = rowCount++; nyxLinkRow = rowCount++; }
+        if (org.telegram.messenger.NyxConfig.get("showId", currentAccount, true) || org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) nyxIdRow = rowCount++;
+    }
+    private void nyxProfileLinks() {
+        String username = nyxUsername();
+        ArrayList<CharSequence> labels = new ArrayList<>(); ArrayList<String> values = new ArrayList<>();
+        if (!TextUtils.isEmpty(username)) {
+            labels.add(LocaleController.getString(R.string.NyxUsername)); values.add("@" + username);
+            labels.add(LocaleController.getString(R.string.NyxLink)); values.add("https://t.me/" + username);
+        }
+        labels.add(LocaleController.getString(R.string.NyxPermanentLink));
+        values.add("tg://openmessage?" + (userId != 0 ? "user_id=" + userId : "chat_id=" + chatId) + "&nyxprofile=1");
+        labels.add(LocaleController.getString(R.string.NyxSaveProfile)); values.add(null);
+        showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(LocaleController.getString(R.string.NyxProfileLinks))
+            .setItems(labels.toArray(new CharSequence[0]), (dialog, which) -> {
+                String value = values.get(which);
+                if (value == null) {
+                    org.telegram.messenger.NyxProfiles.save(currentAccount, userId != 0 ? userId : -chatId,
+                        userId != 0 ? UserObject.getUserName(getMessagesController().getUser(userId)) : (currentChat == null ? "ID " + chatId : currentChat.title));
+                } else AndroidUtilities.addToClipboard(value);
+                Toast.makeText(getParentActivity(), LocaleController.getString(value == null ? R.string.NyxProfileSaved : R.string.NyxCopied), Toast.LENGTH_SHORT).show();
+            }).setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
     }
     private void updateRowsIds() {
         nyxIdRow = nyxDcRow = nyxUsernameRow = nyxLinkRow = -1;
@@ -13492,7 +13516,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     boolean containsQr = false;
                     boolean containsGift = false;
                     if (position == nyxIdRow) {
-                        detailCell.setTextAndValue(Long.toString(userId != 0 ? userId : chatId), LocaleController.getString(R.string.NyxId), true);
+                        String idText = org.telegram.messenger.NyxConfig.get("showId", currentAccount, true) ? "ID: " + (userId != 0 ? userId : chatId) : "";
+                        if (org.telegram.messenger.NyxConfig.get("showDc", currentAccount, true)) idText += (idText.isEmpty() ? "" : " · ") + (nyxPhotoDc() > 0 ? "DC" + nyxPhotoDc() : "DC: —");
+                        detailCell.setTextAndValue(idText, LocaleController.getString(R.string.NyxIdCombined), true);
                     } else if (position == nyxDcRow) {
                         int dc = nyxPhotoDc();
                         detailCell.setTextAndValue(dc > 0 ? "DC" + dc : LocaleController.getString(R.string.NyxUnavailable), LocaleController.getString(R.string.NyxDc), true);

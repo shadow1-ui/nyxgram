@@ -1813,6 +1813,9 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (currentMessageObject != null && currentMessageObject.isDateObject && org.telegram.messenger.NyxAppearance.get("dates")) {
+            setMeasuredDimension(android.view.View.MeasureSpec.getSize(widthMeasureSpec), 0); return;
+        }
         MessageObject messageObject = currentMessageObject;
         if (messageObject == null && customText == null) {
             setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), topicSeparatorTopPadding + textHeight + dp(14));
@@ -2739,6 +2742,7 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (currentMessageObject != null && currentMessageObject.isDateObject && org.telegram.messenger.NyxAppearance.get("dates")) return;
         canvas.save();
         canvas.translate(sideMenuWidth / 2f, getPaddingTop());
 

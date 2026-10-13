@@ -7052,6 +7052,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             commentView.onResume();
         }
         if (!onlySelect && folderId == 0 && communityId == 0) {
+            if (!inPreviewMode) NyxUpdates.check(this, false);
             getMediaDataController().checkStickers(MediaDataController.TYPE_EMOJI);
         }
         if (searchViewPager != null) {

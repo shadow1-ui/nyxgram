@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <exclude domain="database" path="nyx_archive.db"/>
+    <exclude domain="database" path="nyx_archive.db-journal"/>
+    <exclude domain="database" path="nyx_archive.db-wal"/>
+    <exclude domain="database" path="nyx_archive.db-shm"/>
+    <exclude domain="sharedpref" path="nyx_security.xml"/>
+    <exclude domain="sharedpref" path="nyxgram.xml"/>
+    <exclude domain="file" path="nyx_updates/"/>
+</full-backup-content>

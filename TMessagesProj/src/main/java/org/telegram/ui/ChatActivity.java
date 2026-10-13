@@ -3354,6 +3354,7 @@ public class ChatActivity extends BaseFragment implements
 
     @Override
     public void onFragmentDestroy() {
+        if (nyxAddedSecureFlag && getParentActivity() != null) getParentActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         super.onFragmentDestroy();
         if (messageMetricsView != null) {
             messageMetricsView.finish();
@@ -3958,6 +3959,10 @@ public class ChatActivity extends BaseFragment implements
                                 if (getParentActivity() != null) Toast.makeText(getParentActivity(), LocaleController.getString(ok ? R.string.NyxReadSent : R.string.NyxReadError), Toast.LENGTH_SHORT).show();
                             });
                         }).setNegativeButton(LocaleController.getString(R.string.NyxCancel), null).create());
+                } else if (id == 9904) {
+                    NyxArchiveGate.require(currentAccount, ChatActivity.this, () -> presentFragment(new NyxArchiveActivity(dialog_id, org.telegram.messenger.NyxArchive.DELETED)));
+                } else if (id == 9905) {
+                    NyxArchiveGate.require(currentAccount, ChatActivity.this, () -> presentFragment(new NyxArchiveActivity(dialog_id, org.telegram.messenger.NyxArchive.EDITED)));
                 } else if (id == 9903) {
                     presentFragment(new NyxgramActivity());
                 } else if (id == chat_menu_attach) {
@@ -4330,6 +4335,10 @@ public class ChatActivity extends BaseFragment implements
                 headerItem.lazilyAddSubItem(9902, R.drawable.msg_markread, LocaleController.getString(R.string.NyxManualRead));
             }
             headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
+            if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                headerItem.lazilyAddSubItem(9904, R.drawable.msg_markread, LocaleController.getString(R.string.NyxHistoryForChat));
+                headerItem.lazilyAddSubItem(9905, R.drawable.msg_markread, LocaleController.getString(R.string.NyxEditsArchive));
+            }
 
             if (currentUser != null && currentUser.self && chatMode != MODE_SAVED) {
                 savedChatsItem = headerItem.lazilyAddSubItem(view_as_topics, R.drawable.msg_topics, LocaleController.getString(R.string.SavedViewAsChats));
@@ -4510,6 +4519,10 @@ public class ChatActivity extends BaseFragment implements
                 headerItem.lazilyAddSubItem(9902, R.drawable.msg_markread, LocaleController.getString(R.string.NyxManualRead));
             }
             headerItem.lazilyAddSubItem(9903, R.drawable.settings_privacy, LocaleController.getString(R.string.NyxTitle));
+            if (currentEncryptedChat == null && chatMode == MODE_DEFAULT) {
+                headerItem.lazilyAddSubItem(9904, R.drawable.msg_markread, LocaleController.getString(R.string.NyxHistoryForChat));
+                headerItem.lazilyAddSubItem(9905, R.drawable.msg_markread, LocaleController.getString(R.string.NyxEditsArchive));
+            }
 
             headerItem.lazilyAddSubItem(copy_business_link, R.drawable.msg_copy, getString(R.string.Copy));
             headerItem.lazilyAddSubItem(share_business_link, R.drawable.msg_share, getString(R.string.LinkActionShare));
@@ -20538,7 +20551,21 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    private boolean nyxPurgingArchive;
+    private boolean nyxMergingArchive;
     private void didReceivedNotification_messagesDidLoad(int id, int account, final Object... args) {
+        if (!nyxMergingArchive && args.length > 14 && (Integer) args[10] == classGuid
+                && (Integer) args[14] == MODE_DEFAULT && (Long) args[0] == dialog_id
+                && threadMessageId == 0 && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
+                && NyxArchiveGate.canShow(currentAccount)) {
+            Object[] copy = args.clone();
+            org.telegram.messenger.NyxArchive.merge(currentAccount, dialog_id, threadMessageId, (ArrayList<MessageObject>) args[2], result -> {
+                if (getParentActivity() == null) return;
+                copy[2] = result; nyxMergingArchive = true;
+                try { didReceivedNotification_messagesDidLoad(id, account, copy); } finally { nyxMergingArchive = false; }
+            });
+            return;
+        }
         int guid = (Integer) args[10];
         if (guid != classGuid) {
             return;
@@ -26388,6 +26415,14 @@ public class ChatActivity extends BaseFragment implements
                         }
                     }
                 }
+                if (!nyxPurgingArchive && chatMode == MODE_DEFAULT && loadIndex == 0 && !obj.scheduled
+                        && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
+                        && org.telegram.messenger.NyxArchive.eligible(obj.messageOwner) && NyxArchiveGate.canShow(currentAccount)) {
+                    org.telegram.messenger.NyxArchive.deleted(currentAccount, obj.messageOwner);
+                    obj.nyxDeleted = true; updated = true;
+                    if (editingMessageObject == obj) hideFieldPanel(true);
+                    continue;
+                }
                 obj.deleted = true;
                 if (obj.scheduled && sent) {
                     obj.scheduledSent = true;
@@ -29793,9 +29828,22 @@ public class ChatActivity extends BaseFragment implements
 
     Bulletin.Delegate bulletinDelegate;
 
+    private boolean nyxAddedSecureFlag;
+    private int nyxAppearanceVersion = -1;
     @Override
     public void onResume() {
         super.onResume();
+        int styleVersion = org.telegram.messenger.NyxConfig.prefs().getInt("appearance_revision", 0);
+        if (styleVersion != nyxAppearanceVersion) {
+            nyxAppearanceVersion = styleVersion;
+            for (MessageObject object : messages) object.resetLayout();
+            if (chatAdapter != null) chatAdapter.notifyDataSetChanged();
+            if (chatListView != null) chatListView.requestLayout();
+        }
+        if (org.telegram.messenger.NyxConfig.get("protectArchive", currentAccount, false) && getParentActivity() != null
+                && (getParentActivity().getWindow().getAttributes().flags & android.view.WindowManager.LayoutParams.FLAG_SECURE) == 0) {
+            getParentActivity().getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE); nyxAddedSecureFlag = true;
+        }
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
         if (openImport && getSendMessagesHelper().getImportingHistory(dialog_id) != null) {
@@ -30734,6 +30782,12 @@ public class ChatActivity extends BaseFragment implements
         }
         if (message == null) {
             return false;
+        }
+        if (message.nyxDeleted) {
+            org.telegram.messenger.NyxArchive.Entry entry = new org.telegram.messenger.NyxArchive.Entry();
+            entry.message = message.messageOwner; entry.dialog = message.getDialogId(); entry.mid = message.getId();
+            entry.kind = org.telegram.messenger.NyxArchive.DELETED; entry.changed = System.currentTimeMillis();
+            NyxArchiveActivity.showEntry(this, entry); return true;
         }
         if (!single && TlUtils.isInstance(message.messageOwner.action,
                 TLRPC.TL_messageActionChangeCommunity.class,
@@ -35819,6 +35873,15 @@ public class ChatActivity extends BaseFragment implements
                     final NotificationCenter.NotificationCenterDelegate observer = new NotificationCenter.NotificationCenterDelegate() {
                         @Override
                         public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.updateInterfaces && args.length > 2 && "nyx_archive_cleared".equals(args[1])
+                && args[2] instanceof Long && (Long)args[2] == getUserConfig().getClientUserId()) {
+            ArrayList<Integer> localCopies = new ArrayList<>();
+            for (MessageObject object : messages) if (object.nyxDeleted) localCopies.add(object.getId());
+            nyxPurgingArchive = true;
+            try { processDeletedMessages(localCopies, ChatObject.isChannel(currentChat) ? -dialog_id : 0, false, false); }
+            finally { nyxPurgingArchive = false; }
+            return;
+        }
                             if (id == NotificationCenter.messagesDidLoad && (Integer) args[10] == commentsClassGuid) {
                                 openCommentsChat.run();
                                 AndroidUtilities.runOnUIThread(() -> {

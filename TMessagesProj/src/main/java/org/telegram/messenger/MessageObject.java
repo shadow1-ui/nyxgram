@@ -222,6 +222,7 @@ public class MessageObject {
     public String dateKey;
     public int dateKeyInt;
     public String monthKey;
+    public boolean nyxDeleted;
     public boolean deleted;
     public boolean deletedByThanos;
     public float audioProgress;
@@ -11591,6 +11592,7 @@ public class MessageObject {
     }
 
     public boolean canEditMessage(TLRPC.Chat chat) {
+        if (nyxDeleted) return false;
         return !isEphemeralAndNotWelcome() && canEditMessage(currentAccount, messageOwner, chat, scheduled);
     }
 
@@ -11599,6 +11601,7 @@ public class MessageObject {
     }
 
     public boolean canForwardMessage() {
+        if (nyxDeleted) return false;
         if (isQuickReply()) return false;
         if (type == TYPE_GIFT_STARS || type == TYPE_GIFT_THEME_UPDATE || type == TYPE_SUGGEST_BIRTHDAY || type == TYPE_GIFT_OFFER || type == TYPE_SHARING_OFFER || type == TYPE_COMMUNITY_CHANGED) return false;
         return !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != MessageObject.TYPE_PHONE_CALL && !isSponsored() && !messageOwner.noforwards;

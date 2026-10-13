@@ -2,9 +2,18 @@ name: Build Nyxgram
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Опубликовать проверенное обновление в GitHub Releases'
+        required: false
+        type: boolean
+        default: false
   push:
     branches: [ master ]
     paths-ignore: [ '**.md' ]
+
+permissions:
+  contents: write
 
 concurrency:
   group: build-${{ github.ref }}
@@ -51,6 +60,11 @@ jobs:
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+
+      - name: Set monotonic Nyxgram build version
+        run: |
+          CODE=$((7200 + GITHUB_RUN_NUMBER))
+          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$CODE/" gradle.properties
 
       - name: Inject Telegram API keys
         env:
@@ -101,3 +115,37 @@ jobs:
           name: Nyxgram-${{ github.run_number }}-arm64
           path: out/*.apk
           retention-days: 30
+
+      - name: Prepare verified update manifest
+        run: |
+          python3 - <<'PYCODE'
+          import hashlib, json, os, pathlib, re
+          apk = next(pathlib.Path('out').glob('*.apk'))
+          props = pathlib.Path('gradle.properties').read_text()
+          code = int(re.search(r'^APP_VERSION_CODE=(\d+)', props, re.M).group(1)) * 10 + 9
+          manifest = {'package': 'com.nyxgram.android', 'versionCode': code, 'version': '0.3', 'apk': apk.name,
+                      'sha256': hashlib.sha256(apk.read_bytes()).hexdigest(), 'size': apk.stat().st_size}
+          pathlib.Path('out/nyx-update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PYCODE
+
+      - name: Upload update metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nyxgram-${{ github.run_number }}-update-manifest
+          path: out/nyx-update.json
+          retention-days: 30
+
+      - name: Publish tested release or prepare draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISH: ${{ inputs.publish_release }}
+        run: |
+          TAG="nyx-0.3-build-${GITHUB_RUN_NUMBER}"
+          EXTRA="--draft"
+          if [ "$PUBLISH" = "true" ]; then EXTRA=""; fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/*.apk out/nyx-update.json --clobber
+            if [ "$PUBLISH" = "true" ]; then gh release edit "$TAG" --draft=false; fi
+          else
+            gh release create "$TAG" out/*.apk out/nyx-update.json $EXTRA --title "Nyxgram 0.3 · сборка ${GITHUB_RUN_NUMBER}" --notes-file NYXGRAM_RELEASE_NOTES.md --target "$GITHUB_SHA"
+          fi

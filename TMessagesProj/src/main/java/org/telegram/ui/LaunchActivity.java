@@ -1547,6 +1547,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         boolean pushOpened = false;
         long push_user_id = 0;
+            boolean nyxProfileLink = false;
         long push_chat_id = 0;
         long[] push_story_dids = null;
         int push_story_id = -1;
@@ -2545,6 +2546,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                         url = url.replace("tg:openmessage", "tg://telegram.org").replace("tg://openmessage", "tg://telegram.org");
                                         data = Uri.parse(url);
 
+                                        nyxProfileLink = "1".equals(data.getQueryParameter("nyxprofile"));
                                         String userID = data.getQueryParameter("user_id");
                                         String chatID = data.getQueryParameter("chat_id");
                                         String msgID = data.getQueryParameter("message_id");
@@ -2985,6 +2987,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             } else if (push_story_dids != null) {
                 NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                 openStories(push_story_dids, true);
+            } else if (nyxProfileLink && (push_user_id != 0 || push_chat_id != 0)) {
+                Bundle profileArgs = new Bundle();
+                if (push_user_id != 0) profileArgs.putLong("user_id", push_user_id); else profileArgs.putLong("chat_id", push_chat_id);
+                ProfileActivity profile = new ProfileActivity(profileArgs);
+                if (getActionBarLayout().presentFragment(new INavigationLayout.NavigationParams(profile).setNoAnimation(true))) {
+                    pushOpened = true; LaunchActivity.dismissAllWeb();
+                }
             } else if (push_user_id != 0) {
                 if (audioCallUser || videoCallUser) {
                     if (needCallAlert) {
@@ -6726,6 +6735,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onPause() {
+        NyxArchiveGate.lock();
         super.onPause();
         isResumed = false;
         pipActivityHandler.onPause();
