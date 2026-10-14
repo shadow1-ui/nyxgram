@@ -5882,7 +5882,7 @@ public class ChatActivity extends BaseFragment implements
                             if (group == null || (k == 0 && group.messages.size() == 1) || (k == 1 && !group.transitionParams.drawBackgroundForDeletedItems)) {
                                 continue;
                             }
-                            if ((k == 0 && cell.getMessageObject().deleted) || (k == 1 && !cell.getMessageObject().deleted)) {
+                            if ((k == 0 && !org.telegram.messenger.NyxDeletedMessages.visible(cell.getMessageObject().deleted, cell.getMessageObject().nyxDeleted)) || (k == 1 && org.telegram.messenger.NyxDeletedMessages.visible(cell.getMessageObject().deleted, cell.getMessageObject().nyxDeleted))) {
                                 continue;
                             }
                             if ((k == 2 && !cell.willRemovedAfterAnimation()) || (k != 2 && cell.willRemovedAfterAnimation())) {
@@ -6183,7 +6183,7 @@ public class ChatActivity extends BaseFragment implements
                     final ImageReceiver imageReceiver = mcell.getAvatarImage();
                     if (imageReceiver != null && getSideMenuAlpha() < 1.f) {
                         final MessageObject.GroupedMessages groupedMessages = getValidGroupedMessage(message);
-                        boolean updateVisibility = !mcell.getMessageObject().deleted && chatListView.getChildAdapterPosition(child) != RecyclerView.NO_POSITION;
+                        boolean updateVisibility = org.telegram.messenger.NyxDeletedMessages.visible(mcell.getMessageObject().deleted, mcell.getMessageObject().nyxDeleted) && chatListView.getChildAdapterPosition(child) != RecyclerView.NO_POSITION;
 
                         boolean replaceAnimation = chatListView.isFastScrollAnimationRunning() || (groupedMessages != null && groupedMessages.transitionParams.backgroundChangeBounds);
                         int top = (replaceAnimation ? child.getTop() : (int) child.getY()) + child.getPaddingTop();
@@ -20540,6 +20540,12 @@ public class ChatActivity extends BaseFragment implements
 
     @Override
     public void didReceivedNotification(int id, int account, final Object... args) {
+        if (id == NotificationCenter.updateInterfaces && args.length > 1 && "nyx_archive_style".equals(args[1])) {
+            for (MessageObject object : messages) if (object.nyxDeleted) object.forceUpdate = true;
+            updateVisibleRows();
+            if (chatListView != null) chatListView.invalidate();
+            return;
+        }
         if (id == NotificationCenter.updateInterfaces && args.length > 2 && ("nyx_archive_cleared".equals(args[1]) || "nyx_deleted_visibility".equals(args[1]) && !org.telegram.messenger.NyxConfig.get("keepDeleted",currentAccount,false))
                 && args[2] instanceof Long && (Long)args[2] == getUserConfig().getClientUserId()) {
             ArrayList<Integer> localCopies = new ArrayList<>();
@@ -20566,10 +20572,19 @@ public class ChatActivity extends BaseFragment implements
     private void didReceivedNotification_messagesDidLoad(int id, int account, final Object... args) {
         if (!nyxMergingArchive && args.length > 14 && (Integer) args[10] == classGuid
                 && (Integer) args[14] == MODE_DEFAULT && (Long) args[0] == dialog_id
-                && threadMessageId == 0 && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
+                && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
                 && NyxArchiveGate.canShow(currentAccount)) {
             Object[] copy = args.clone();
-            org.telegram.messenger.NyxArchive.merge(currentAccount, dialog_id, threadMessageId, (ArrayList<MessageObject>) args[2], result -> {
+            final ArrayList<MessageObject> nyxPage = (ArrayList<MessageObject>) args[2];
+            final int nyxLoadType = (Integer) args[8], nyxAnchor = (Integer) args[12];
+            final TLRPC.Dialog nyxDialog = getMessagesController().dialogs_dict.get(dialog_id);
+            boolean nyxLatest = nyxAnchor == 0 && (nyxLoadType == MessagesController.LOAD_BACKWARD
+                    || nyxLoadType == MessagesController.LOAD_FROM_UNREAD && (Integer) args[4] <= 0);
+            if (nyxDialog != null && nyxDialog.top_message > 0) for (MessageObject object : nyxPage) {
+                if (object.getId() >= nyxDialog.top_message) { nyxLatest = true; break; }
+            }
+            org.telegram.messenger.NyxArchive.merge(currentAccount, dialog_id, threadMessageId, isTopic,
+                    nyxAnchor, nyxLatest, (Boolean) args[9] && nyxLoadType != MessagesController.LOAD_FORWARD, nyxPage, result -> {
                 if (getParentActivity() == null) return;
                 copy[2] = result; nyxMergingArchive = true;
                 try { didReceivedNotification_messagesDidLoad(id, account, copy); } finally { nyxMergingArchive = false; }
@@ -26407,6 +26422,10 @@ public class ChatActivity extends BaseFragment implements
                 updateReplyMessageOwners(mid, null);
             }
             if (obj != null) {
+                if (obj.nyxDeleted && !nyxPurgingArchive && !sent && thanos
+                        && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)) {
+                    obj.forceUpdate = true; updated = true; continue;
+                }
                 if (obj.messageOwner.reply_to != null && !(obj.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage)) {
                     int replyId = obj.getReplyAnyMsgId();
                     if (threadMessageObject != null && threadMessageObject.getId() == replyId) {
@@ -26425,11 +26444,12 @@ public class ChatActivity extends BaseFragment implements
                         }
                     }
                 }
-                if (!nyxPurgingArchive && chatMode == MODE_DEFAULT && loadIndex == 0 && !obj.scheduled
-                        && org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false)
-                        && org.telegram.messenger.NyxArchive.eligible(obj.messageOwner) && !sent) {
+                if (org.telegram.messenger.NyxDeletedMessages.retain(
+                        org.telegram.messenger.NyxConfig.get("keepDeleted", currentAccount, false),
+                        chatMode == MODE_DEFAULT, loadIndex == 0, obj.scheduled, sent, !thanos,
+                        nyxPurgingArchive, org.telegram.messenger.NyxArchive.eligible(obj.messageOwner))) {
                     org.telegram.messenger.NyxArchive.deleted(currentAccount, obj.messageOwner);
-                    obj.nyxDeleted = true; obj.forceUpdate = true; updated = true;
+                    obj.nyxDeleted = true; obj.deletedByThanos = false; obj.forceUpdate = true; updated = true;
                     if (editingMessageObject == obj) hideFieldPanel(true);
                     continue;
                 }
@@ -26745,6 +26765,7 @@ public class ChatActivity extends BaseFragment implements
                 a--;
             }
 
+            if (old.nyxDeleted) { messageObject.nyxDeleted = true; messageObject.forceUpdate = true; }
             addToPolls(messageObject, old);
             if (old.richCheckboxEcho && messageObject.type == MessageObject.TYPE_ARTICLE && old.richLayout != null && messageObject.messageOwner != null) {
                 messageObject.richLayout = old.richLayout;
@@ -34958,7 +34979,7 @@ public class ChatActivity extends BaseFragment implements
                     cell.setChecked(false, false, true);
                 }
 
-                if (messageObject != null && (!messageObject.deleted || cell.linkedChatId != linkedChatId) && !suppressUpdateMessageObject) {
+                if (messageObject != null && (org.telegram.messenger.NyxDeletedMessages.visible(messageObject.deleted, messageObject.nyxDeleted) || cell.linkedChatId != linkedChatId) && !suppressUpdateMessageObject) {
                     cell.setIsUpdating(true);
                     cell.linkedChatId = chatInfo != null ? chatInfo.linked_chat_id : 0;
                     cell.setMessageObject(messageObject, cell.getCurrentMessagesGroup(), cell.isPinnedBottom(), cell.isPinnedTop(), cell.isFirstInChat(), cell.isLastInChatList());

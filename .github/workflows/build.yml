@@ -51,6 +51,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Test Nyxgram deleted message lifecycle
+        run: python3 tools/test_nyx_deleted.py
+
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Set up ccache (кэш нативной сборки)
@@ -126,7 +129,7 @@ jobs:
           apk = next(pathlib.Path('out').glob('*.apk'))
           props = pathlib.Path('gradle.properties').read_text()
           code = int(re.search(r'^APP_VERSION_CODE=(\d+)', props, re.M).group(1)) * 10 + 9
-          manifest = {'package': 'com.nyxgram.android', 'versionCode': code, 'version': '0.4.2', 'apk': apk.name,
+          manifest = {'package': 'com.nyxgram.android', 'versionCode': code, 'version': '0.4.3', 'apk': apk.name,
                       'sha256': hashlib.sha256(apk.read_bytes()).hexdigest(), 'size': apk.stat().st_size}
           pathlib.Path('out/nyx-update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
           PYCODE
@@ -138,17 +141,17 @@ jobs:
           path: out/nyx-update.json
           retention-days: 30
 
-      - name: Publish tested release or prepare draft
+      - name: Publish requested release or prepare draft
         env:
           GH_TOKEN: ${{ github.token }}
           PUBLISH: ${{ inputs.publish_release }}
         run: |
-          TAG="nyx-0.4.2-build-${GITHUB_RUN_NUMBER}"
+          TAG="nyx-0.4.3-build-${GITHUB_RUN_NUMBER}"
           EXTRA="--draft"
           if [ "$PUBLISH" = "true" ]; then EXTRA=""; fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" out/*.apk out/nyx-update.json --clobber
             if [ "$PUBLISH" = "true" ]; then gh release edit "$TAG" --draft=false; fi
           else
-            gh release create "$TAG" out/*.apk out/nyx-update.json $EXTRA --title "Nyxgram 0.4.2 · сборка ${GITHUB_RUN_NUMBER}" --notes-file NYXGRAM_RELEASE_NOTES.md --target "$GITHUB_SHA"
+            gh release create "$TAG" out/*.apk out/nyx-update.json $EXTRA --title "Nyxgram 0.4.3 · сборка ${GITHUB_RUN_NUMBER}" --notes-file NYXGRAM_RELEASE_NOTES.md --target "$GITHUB_SHA"
           fi

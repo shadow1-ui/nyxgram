@@ -149,7 +149,7 @@ public final class NyxArchive {
                 StringBuilder list = new StringBuilder();for(int id:ids){if(list.length()>0)list.append(',');list.append(id);}
                 where = "mid IN("+list+")" + (did != 0 ? " AND uid="+did : " AND is_channel=0");
             }
-            cursor = telegram.queryFinalized("SELECT uid,data FROM messages_v2 WHERE "+where);
+            cursor = telegram.queryFinalized("SELECT uid,data FROM messages_v2 WHERE "+where+" UNION ALL SELECT uid,data FROM messages_topics WHERE "+where);
             while (cursor.next()) {
                 long dialog = cursor.longValue(0); byte[] bytes = cursor.byteArrayValue(1);
                 TLRPC.Message m = decode(bytes,owner(account)); if (!eligible(m)) continue;
@@ -206,33 +206,39 @@ public final class NyxArchive {
             AndroidUtilities.runOnUIThread(() -> callback.run(owner(account)==uid && NyxArchiveGate.canShow(account)?result:new ArrayList<>()));
         });
     }
-    public static void merge(int account,long did,long thread,ArrayList<MessageObject> source,Utilities.Callback<ArrayList<MessageObject>> callback) {
-        if(!NyxConfig.get("keepDeleted",account,false) || !NyxArchiveGate.canShow(account) || thread!=0 || DialogObject.isEncryptedDialog(did)) {callback.run(source);return;}
+    public static void merge(int account,long did,long thread,boolean forum,int anchor,boolean latest,boolean oldest,ArrayList<MessageObject> source,Utilities.Callback<ArrayList<MessageObject>> callback) {
+        if(!NyxConfig.get("keepDeleted",account,false) || !NyxArchiveGate.canShow(account) || DialogObject.isEncryptedDialog(did)) {callback.run(source);return;}
         long uid=owner(account);ArrayList<MessageObject> input=new ArrayList<>(source);
         queue.postRunnable(() -> {
-            ArrayList<MessageObject> output=new ArrayList<>(input);
+            ArrayList<MessageObject> output=new ArrayList<>(input);Set<Integer> deletedIds=new HashSet<>();
             try {
                 open();prune(account,uid,true);int min=Integer.MAX_VALUE,max=0;Set<Integer> ids=new HashSet<>();
                 for(MessageObject m:input)if(m.getDialogId()==did && m.getId()>0){min=Math.min(min,m.getId());max=Math.max(max,m.getId());ids.add(m.getId());}
                 String selection="owner=? AND did=? AND kind=1";ArrayList<String> range=new ArrayList<>(Arrays.asList(""+uid,""+did));
-                if(max>0){selection+=" AND mid>=? AND mid<=?";range.add(""+min);range.add(""+max);}
-                try(Cursor c=db.rawQuery("SELECT mid,body FROM history WHERE "+selection+" GROUP BY mid ORDER BY mid DESC LIMIT 100",range.toArray(new String[0]))) {
+                int[] bounds=NyxDeletedMessages.pageBounds(min,max,anchor,latest,oldest);selection+=" AND mid>=? AND mid<=?";range.add(""+bounds[0]);range.add(""+bounds[1]);
+                int added=0;
+                try(Cursor c=db.rawQuery("SELECT mid,body FROM history WHERE "+selection+" GROUP BY mid ORDER BY mid DESC LIMIT 3000",range.toArray(new String[0]))) {
                     while(c.moveToNext()) {
                         int mid=c.getInt(0);
-                        for(MessageObject present:output)if(present.getId()==mid && present.getDialogId()==did)present.nyxDeleted=true;
-                        if(ids.contains(mid))continue;
-                        TLRPC.Message message=decode(crypt(c.getBlob(1),uid,did,mid,DELETED,false),uid);message.dialog_id=did;
+                        TLRPC.Message message=decode(crypt(c.getBlob(1),uid,did,mid,DELETED,false),uid);
+                        if(!eligible(message))continue;message.dialog_id=did;
                         MessageObject m=new MessageObject(account,message,true,true);
+                        if(!NyxDeletedMessages.inThread(mid,m.getTopicId(),m.getReplyMsgId(),m.getReplyTopMsgId(),thread,forum))continue;
+                        if(ids.contains(mid)){deletedIds.add(mid);continue;}
                         if(message.media!=null && !(message.media instanceof TLRPC.TL_messageMediaEmpty) && !m.mediaExists && !m.attachPathExists) {
                             message.media=new TLRPC.TL_messageMediaEmpty();message.message=LocaleController.getString(R.string.NyxArchiveLocalFile)+(message.message==null || message.message.isEmpty()?"":"\n"+message.message);
                             m=new MessageObject(account,message,true,false);
                         }
-                        m.nyxDeleted=true;output.add(m);
+                        m.nyxDeleted=true;output.add(m);if(++added>=100)break;
                     }
                 }
                 output.sort((a,b)->Integer.compare(b.getId(),a.getId()));
             }catch(Exception error){FileLog.e(error);}
-            AndroidUtilities.runOnUIThread(()->callback.run(owner(account)==uid && NyxArchiveGate.canShow(account)?output:source));
+            AndroidUtilities.runOnUIThread(()->{
+                if(owner(account)!=uid || !NyxArchiveGate.canShow(account) || !NyxConfig.get("keepDeleted",account,false)){callback.run(source);return;}
+                for(MessageObject present:output)if(deletedIds.contains(present.getId())&&present.getDialogId()==did){present.nyxDeleted=true;present.deletedByThanos=false;present.forceUpdate=true;}
+                callback.run(output);
+            });
         });
     }
 }

@@ -168,7 +168,7 @@ public class NyxgramActivity extends BaseFragment {
             case 62: NyxConfig.prefs().edit().putBoolean("autoUpdates", !NyxConfig.prefs().getBoolean("autoUpdates", true)).apply(); break;
             case 64: NyxSettingsTransfer.choose(this, true); return;
             case 65: NyxSettingsTransfer.choose(this, false); return;
-            case 80: archiveToggle("keepDeleted"); NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces,MessagesController.UPDATE_MASK_ALL,"nyx_deleted_visibility",getUserConfig().getClientUserId());return;
+            case 80: archiveToggle("keepDeleted"); return;
             case 81: archiveToggle("keepEdits"); return;
             case 82: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.DELETED))); return;
             case 83: NyxArchiveGate.require(currentAccount, this, () -> presentFragment(new NyxArchiveActivity(0, NyxArchive.EDITED))); return;
@@ -192,12 +192,16 @@ public class NyxgramActivity extends BaseFragment {
         listView.adapter.update(true);
     }
     private void archiveToggle(String key) {
-        if (NyxConfig.get(key, currentAccount, false)) { NyxConfig.set(key, currentAccount, false); listView.adapter.update(false); return; }
+        if (NyxConfig.get(key, currentAccount, false)) { NyxConfig.set(key, currentAccount, false); archiveChanged(key); listView.adapter.update(false); return; }
         showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(R.string.NyxHistory)).setMessage(getString(R.string.NyxArchiveConsent))
-            .setPositiveButton(getString(R.string.NyxEnable), (d,w) -> { NyxConfig.set(key, currentAccount, true); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
+            .setPositiveButton(getString(R.string.NyxEnable), (d,w) -> { NyxConfig.set(key, currentAccount, true); archiveChanged(key); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
+    }
+    private void archiveChanged(String key) {
+        if ("keepDeleted".equals(key)) getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces,
+                MessagesController.UPDATE_MASK_ALL, "nyx_deleted_visibility", getUserConfig().getClientUserId());
     }
     private void chooseNumber(String key, int[] numbers, String[] labels, int title) {
-        showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(title)).setItems(labels, (d,n) -> { NyxConfig.setNumber(key, currentAccount, numbers[n]); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
+        showDialog(new AlertDialog.Builder(getParentActivity()).setTitle(getString(title)).setItems(labels, (d,n) -> { NyxConfig.setNumber(key, currentAccount, numbers[n]); if ("deletedIcon".equals(key) || "deletedColor".equals(key)) getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL, "nyx_archive_style"); listView.adapter.update(false); }).setNegativeButton(getString(R.string.NyxCancel), null).create());
     }
     @Override public void onActivityResultFragment(int request, int result, android.content.Intent data) {
         if (!NyxSettingsTransfer.result(this, request, result, data)) super.onActivityResultFragment(request, result, data);
