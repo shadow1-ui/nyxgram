@@ -13,8 +13,9 @@ import java.security.MessageDigest;
 /** Local visual capabilities, deliberately separate from UserConfig.isPremium/server entitlements. */
 public final class NyxPremium {
     private static final HashMap<Integer,NotificationCenter.NotificationCenterDelegate> observers=new HashMap<>();
-    public static boolean enabled(int account){return UserConfig.getInstance(account).getClientUserId()!=0 && NyxConfig.get("localPremium",account,false);}
-    public static boolean available(int account){return UserConfig.getInstance(account).isPremium()||enabled(account);}
+    private static boolean validAccount(int account){return account>=0&&account<UserConfig.MAX_ACCOUNT_COUNT;}
+    public static boolean enabled(int account){return validAccount(account)&&UserConfig.getInstance(account).getClientUserId()!=0 && NyxConfig.get("localPremium",account,false);}
+    public static boolean available(int account){return validAccount(account)&&(UserConfig.getInstance(account).isPremium()||enabled(account));}
     public static boolean localOnly(int account){return enabled(account)&&!UserConfig.getInstance(account).isPremium();}
     public static boolean displayUser(TLRPC.User user,int account){return user!=null&&(user.premium||(user.id==UserConfig.getInstance(account).getClientUserId()&&enabled(account)));}
     private static String statusKey(int account){return "localStatus_"+UserConfig.getInstance(account).getClientUserId();}
@@ -78,7 +79,7 @@ public final class NyxPremium {
         try{JSONObject o=new JSONObject(raw);if(!fingerprint(message.message).equals(o.optString("hash")))return original;JSONArray data=o.getJSONArray("emoji");ArrayList<TLRPC.MessageEntity> out=original==null?new ArrayList<>():new ArrayList<>(original);out.removeIf(e->e instanceof TLRPC.TL_messageEntityCustomEmoji);for(int i=0;i<data.length();i++){JSONArray a=data.getJSONArray(i);int offset=a.getInt(0),length=a.getInt(1);if(offset<0||length<=0||(long)offset+length>message.message.length())continue;TLRPC.TL_messageEntityCustomEmoji e=new TLRPC.TL_messageEntityCustomEmoji();e.offset=offset;e.length=length;e.document_id=a.getLong(2);out.add(e);}return out;}catch(Exception e){FileLog.e(e);return original;}
     }
     public static void observe(int account){
-        if(observers.containsKey(account))return;
+        if(!validAccount(account)||observers.containsKey(account))return;
         NotificationCenter.NotificationCenterDelegate observer=(id,a,args)->{if(id==NotificationCenter.messageReceivedByServer&&args.length>3&&args[0] instanceof Integer&&args[1] instanceof Integer&&args[3] instanceof Long){SharedPreferences p=emojiPrefs();String old=emojiKey(account,(Long)args[3],(Integer)args[0]),next=emojiKey(account,(Long)args[3],(Integer)args[1]);String body=p.getString(old,null);if(body!=null)p.edit().remove(old).putString(next,body).apply();}};
         observers.put(account,observer);NotificationCenter.getInstance(account).addObserver(observer,NotificationCenter.messageReceivedByServer);
     }

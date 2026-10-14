@@ -43,6 +43,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check Nyxgram startup account ordering
+        run: python3 tools/check_nyx_startup.py
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -123,7 +126,7 @@ jobs:
           apk = next(pathlib.Path('out').glob('*.apk'))
           props = pathlib.Path('gradle.properties').read_text()
           code = int(re.search(r'^APP_VERSION_CODE=(\d+)', props, re.M).group(1)) * 10 + 9
-          manifest = {'package': 'com.nyxgram.android', 'versionCode': code, 'version': '0.4.1', 'apk': apk.name,
+          manifest = {'package': 'com.nyxgram.android', 'versionCode': code, 'version': '0.4.2', 'apk': apk.name,
                       'sha256': hashlib.sha256(apk.read_bytes()).hexdigest(), 'size': apk.stat().st_size}
           pathlib.Path('out/nyx-update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
           PYCODE
@@ -140,12 +143,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PUBLISH: ${{ inputs.publish_release }}
         run: |
-          TAG="nyx-0.4.1-build-${GITHUB_RUN_NUMBER}"
+          TAG="nyx-0.4.2-build-${GITHUB_RUN_NUMBER}"
           EXTRA="--draft"
           if [ "$PUBLISH" = "true" ]; then EXTRA=""; fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" out/*.apk out/nyx-update.json --clobber
             if [ "$PUBLISH" = "true" ]; then gh release edit "$TAG" --draft=false; fi
           else
-            gh release create "$TAG" out/*.apk out/nyx-update.json $EXTRA --title "Nyxgram 0.4.1 · сборка ${GITHUB_RUN_NUMBER}" --notes-file NYXGRAM_RELEASE_NOTES.md --target "$GITHUB_SHA"
+            gh release create "$TAG" out/*.apk out/nyx-update.json $EXTRA --title "Nyxgram 0.4.2 · сборка ${GITHUB_RUN_NUMBER}" --notes-file NYXGRAM_RELEASE_NOTES.md --target "$GITHUB_SHA"
           fi
