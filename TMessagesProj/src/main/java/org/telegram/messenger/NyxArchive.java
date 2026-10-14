@@ -125,6 +125,7 @@ public final class NyxArchive {
                     }
                     if (previous != null && edit > 0 && NyxConfig.get("keepEdits",account,false)) {
                         TLRPC.Message prior = decode(previous,uid);
+                        if (prior != null) { prior.id = mid; prior.dialog_id = did; }
                         if (eligible(prior)) {
                             if (oldHash == null) oldHash = hash(prior);
                             if (!fingerprint.equals(oldHash)) history(uid,did,mid,EDITED,previous,oldHash,(long)edit*1000);
@@ -149,11 +150,15 @@ public final class NyxArchive {
                 StringBuilder list = new StringBuilder();for(int id:ids){if(list.length()>0)list.append(',');list.append(id);}
                 where = "mid IN("+list+")" + (did != 0 ? " AND uid="+did : " AND is_channel=0");
             }
-            cursor = telegram.queryFinalized("SELECT uid,data FROM messages_v2 WHERE "+where+" UNION ALL SELECT uid,data FROM messages_topics WHERE "+where);
+            cursor = telegram.queryFinalized("SELECT uid,mid,data,ttl FROM messages_v2 WHERE "+where+" UNION ALL SELECT uid,mid,data,ttl FROM messages_topics WHERE "+where);
             while (cursor.next()) {
-                long dialog = cursor.longValue(0); byte[] bytes = cursor.byteArrayValue(1);
-                TLRPC.Message m = decode(bytes,owner(account)); if (!eligible(m)) continue;
-                m.dialog_id = dialog; deleted(account,m);
+                long dialog = cursor.longValue(0); int messageId = cursor.intValue(1);
+                byte[] bytes = cursor.byteArrayValue(2); TLRPC.Message m = decode(bytes,owner(account));
+                if (m == null) continue;
+                // Telegram may remap only the DB mid after sending; the serialized id can still be negative.
+                m.id = messageId; m.dialog_id = dialog; m.ttl = Math.max(m.ttl, cursor.intValue(3));
+                if (!eligible(m)) continue;
+                deleted(account,m);
             }
         } catch (Exception error) { FileLog.e(error); } finally { if(cursor!=null)cursor.dispose(); }
     }

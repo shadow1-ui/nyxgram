@@ -33,6 +33,7 @@ assert s.count('NyxDeletedMessages.visible(')>=3
 assert 'NyxDeletedMessages.retain(' in s and 'old.nyxDeleted' in s and 'nyx_archive_style' in s
 s=(r/'TMessagesProj/src/main/java/org/telegram/messenger/NyxArchive.java').read_text()
 assert 'thread!=0' not in s and 'NyxDeletedMessages.pageBounds' in s and 'NyxDeletedMessages.inThread' in s
-assert 'UNION ALL SELECT uid,data FROM messages_topics' in s
+assert 'UNION ALL SELECT uid,mid,data,ttl FROM messages_topics' in s
+assert 'm.id = messageId; m.dialog_id = dialog; m.ttl = Math.max' in s
 assert 'if(ids.contains(mid)){deletedIds.add(mid);continue;}' in s
 print('PASS: native parent rendering, refresh, pagination and topic archive hooks')
