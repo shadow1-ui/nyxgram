@@ -3131,6 +3131,50 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
     }
 
+    /** UI snapshot only: never expose the mutable playback queue or view-once media. */
+    public ArrayList<MessageObject> getVoiceMessagesPlaylist() {
+        ArrayList<MessageObject> result = new ArrayList<>();
+        MessageObject current = playingMessageObject;
+        if (!nyxQueueEligible(current)) return result;
+        if (voiceMessagesPlaylist != null) {
+            for (MessageObject message : voiceMessagesPlaylist) {
+                if (nyxQueueEligible(message) && message.currentAccount == current.currentAccount
+                        && message.getDialogId() == current.getDialogId()) {
+                    result.add(message);
+                }
+            }
+        }
+        if (!result.contains(current)) result.add(0, current);
+        return result;
+    }
+
+    private static boolean nyxQueueEligible(MessageObject message) {
+        return message != null && (message.isVoice() || message.isRoundVideo())
+                && !message.isVoiceOnce() && !message.isRoundOnce() && !message.nyxDeleted;
+    }
+
+    /** Select from the live queue, preserving subsequent auto-play and the unread policy. */
+    public boolean playVoiceMessageFromQueue(MessageObject message) {
+        MessageObject current = playingMessageObject;
+        if (!nyxQueueEligible(current) || !nyxQueueEligible(message)
+                || current.currentAccount != UserConfig.selectedAccount
+                || message.currentAccount != current.currentAccount
+                || message.getDialogId() != current.getDialogId()
+                || voiceMessagesPlaylist == null) return false;
+        int index = voiceMessagesPlaylist.indexOf(message);
+        if (index < 0) return false;
+        ArrayList<MessageObject> remaining = new ArrayList<>();
+        for (int i = index; i < voiceMessagesPlaylist.size(); i++) {
+            MessageObject candidate = voiceMessagesPlaylist.get(i);
+            if (nyxQueueEligible(candidate) && candidate.currentAccount == current.currentAccount
+                    && candidate.getDialogId() == current.getDialogId()) remaining.add(candidate);
+        }
+        boolean unread = voiceMessagesPlaylistUnread;
+        if (!playMessage(message)) return false;
+        setVoiceMessagesPlaylist(remaining, unread);
+        return true;
+    }
+
     public void setVoiceMessagesPlaylist(ArrayList<MessageObject> playlist, boolean unread) {
         voiceMessagesPlaylist = playlist != null ? new ArrayList<>(playlist) : null;
         if (voiceMessagesPlaylist != null) {

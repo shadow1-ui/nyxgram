@@ -10,7 +10,7 @@ public final class NyxAppearance {
     public static boolean get(String key){return NyxConfig.prefs().getBoolean("appearance_"+key,false);}
     public static void set(String key,boolean value){NyxConfig.prefs().edit().putBoolean("appearance_"+key,value).apply();}
     public static int color(int account){return NyxConfig.number("deletedColor",account,0xFFD976A6);}
-    public static String symbol(int account){String[] symbols={"✕","⌫","●","▱"};int n=NyxConfig.number("deletedIcon",account,0);return symbols[Math.max(0,Math.min(3,n))];}
+    public static String symbol(int account){String[] symbols={"\uD83D\uDDD1\uFE0E","⌫","●","▱"};int n=NyxConfig.number("deletedIcon",account,0);return symbols[Math.max(0,Math.min(3,n))];}
     public static boolean hideTime(MessageObject m){
         if(m==null||m.isSendError()||m.isSending())return false;
         return (m.isAnyKindOfSticker()&&get("stickerTime")) || (m.isGif()&&get("gifTime")) || (m.isRoundVideo()&&get("roundTime"));
@@ -29,7 +29,7 @@ public final class NyxAppearance {
         NyxConfig.prefs().edit().putInt("appearance_revision",NyxConfig.prefs().getInt("appearance_revision",0)+1).apply();
         Theme.refreshThemeColors();
     }
-    private static final int NIGHT_VERSION=2;
+    private static final int NIGHT_VERSION=3;
     public static void migrateNight(){
         String name=Theme.getCurrentTheme().name;
         if(name!=null && name.startsWith("Nyxgram Night") && NyxConfig.prefs().getInt("nyxNightVersion",0)<NIGHT_VERSION)applyNight();
@@ -45,15 +45,15 @@ public final class NyxAppearance {
                 if(name!=null && i!=Theme.key_wallpaperFileOffset)colors.put(name,Theme.getColor(i));
             }
             String[][] groups={
-                {"#0B1020","windowBackgroundGray","chat_wallpaper"},
-                {"#141B2D","windowBackgroundWhite","dialogBackground","actionBarDefault","actionBarDefaultArchived","chat_messagePanelBackground","chat_emojiPanelBackground","chats_menuBackground","chats_menuTopBackground","chats_menuTopShadow","actionBarActionModeDefault","actionBarActionModeDefaultTop"},
-                {"#1C263E","chat_inBubble","chat_botKeyboardButtonBackground","windowBackgroundGrayShadow","dialogBackgroundGray"},
-                {"#47336E","chat_outBubble","chat_outBubbleGradient1","chat_outBubbleGradient2","chat_outBubbleGradient3"},
-                {"#F1F3FA","windowBackgroundWhiteBlackText","dialogTextBlack","actionBarDefaultTitle","actionBarDefaultIcon","actionBarDefaultSearch","chats_name","chats_nameArchived","chats_archiveText","chats_menuItemText","chats_menuName","chat_messageTextIn","chat_messageTextOut","chat_messagePanelText","chat_botButtonText","profile_title"},
-                {"#B7BED2","windowBackgroundWhiteGrayText","windowBackgroundWhiteGrayText2","windowBackgroundWhiteGrayText3","windowBackgroundWhiteHintText","dialogTextGray","dialogTextGray2","dialogTextGray3","dialogTextHint","chats_message","chats_messageArchived","chats_date","chats_menuItemIcon","chats_menuPhone","actionBarDefaultSubtitle","chat_inTimeText","chat_outTimeText","chat_messagePanelHint","chat_messagePanelIcons","chat_inAudioPerformerText","chat_outAudioPerformerText"},
-                {"#A98BFA","windowBackgroundWhiteBlueHeader","windowBackgroundWhiteBlueText","windowBackgroundWhiteBlueText2","windowBackgroundWhiteBlueText3","windowBackgroundWhiteBlueIcon","dialogTextBlue","dialogTextBlue2","dialogButton","chat_messagePanelSend","chat_inReplyNameText","chat_outReplyNameText","chat_inReplyLine","chat_outReplyLine","switchTrackChecked","radioBackgroundChecked"},
-                {"#70D9E8","chat_messageLinkIn","chat_messageLinkOut","chat_inFileNameText","chat_outFileNameText"},
-                {"#26324A","listSelectorSDK21","actionBarDefaultSelector","dialogScrollGlow","switchTrack","divider"}
+                {"#10121C","windowBackgroundGray","chat_wallpaper"},
+                {"#191C2A","windowBackgroundWhite","dialogBackground","actionBarDefault","actionBarDefaultArchived","chat_messagePanelBackground","chat_emojiPanelBackground","chats_menuBackground","chats_menuTopBackground","chats_menuTopShadow","actionBarActionModeDefault","actionBarActionModeDefaultTop"},
+                {"#252A3D","chat_inBubble","chat_botKeyboardButtonBackground","windowBackgroundGrayShadow","dialogBackgroundGray"},
+                {"#403451","chat_outBubble","chat_outBubbleGradient1","chat_outBubbleGradient2","chat_outBubbleGradient3"},
+                {"#EDF0F7","windowBackgroundWhiteBlackText","dialogTextBlack","actionBarDefaultTitle","actionBarDefaultIcon","actionBarDefaultSearch","chats_name","chats_nameArchived","chats_archiveText","chats_menuItemText","chats_menuName","chat_messageTextIn","chat_messageTextOut","chat_messagePanelText","chat_botButtonText","profile_title"},
+                {"#BAC0D4","windowBackgroundWhiteGrayText","windowBackgroundWhiteGrayText2","windowBackgroundWhiteGrayText3","windowBackgroundWhiteHintText","dialogTextGray","dialogTextGray2","dialogTextGray3","dialogTextHint","chats_message","chats_messageArchived","chats_date","chats_menuItemIcon","chats_menuPhone","actionBarDefaultSubtitle","chat_inTimeText","chat_outTimeText","chat_messagePanelHint","chat_messagePanelIcons","chat_inAudioPerformerText","chat_outAudioPerformerText"},
+                {"#B6A2EF","windowBackgroundWhiteBlueHeader","windowBackgroundWhiteBlueText","windowBackgroundWhiteBlueText2","windowBackgroundWhiteBlueText3","windowBackgroundWhiteBlueIcon","dialogTextBlue","dialogTextBlue2","dialogButton","chat_messagePanelSend","chat_inReplyNameText","chat_outReplyNameText","chat_inReplyLine","chat_outReplyLine","switchTrackChecked","radioBackgroundChecked"},
+                {"#8AD9DD","chat_messageLinkIn","chat_messageLinkOut","chat_inFileNameText","chat_outFileNameText"},
+                {"#34394E","listSelectorSDK21","actionBarDefaultSelector","dialogScrollGlow","switchTrack","divider"}
             };
             for(String[] group:groups){int color=android.graphics.Color.parseColor(group[0]);for(int n=1;n<group.length;n++)colors.put(group[n],color);}
             StringBuilder text=new StringBuilder();for(java.util.Map.Entry<String,Integer> e:colors.entrySet())text.append(e.getKey()).append('=').append(e.getValue()).append('\n');

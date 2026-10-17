@@ -762,35 +762,17 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 }
             } else if (currentStyle == STYLE_AUDIO_PLAYER) {
                 MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
-                if (fragment != null && messageObject != null) {
-                    if (messageObject.isMusic()) {
-                        final Activity activity = AndroidUtilities.findActivity(getContext());
-                        if (activity instanceof LaunchActivity) {
-                            new AudioPlayerAlert(activity, resourcesProvider).show();
-                        } else if (AndroidUtilities.isContextSafe(LaunchActivity.instance)) {
-                            new AudioPlayerAlert(LaunchActivity.instance, resourcesProvider).show();
-                        }
-                    } else {
-                        long dialogId = 0;
-                        if (chatActivity != null) {
-                            dialogId = chatActivity.getDialogId();
-                        }
-                        if (messageObject.getDialogId() == dialogId) {
-                            chatActivity.scrollToMessageId(messageObject.getId(), 0, false, 0, true, 0);
-                        } else {
-                            dialogId = messageObject.getDialogId();
-                            Bundle args = new Bundle();
-                            if (DialogObject.isEncryptedDialog(dialogId)) {
-                                args.putInt("enc_id", DialogObject.getEncryptedChatId(dialogId));
-                            } else if (DialogObject.isUserDialog(dialogId)) {
-                                args.putLong("user_id", dialogId);
-                            } else {
-                                args.putLong("chat_id", -dialogId);
-                            }
-                            args.putInt("message_id", messageObject.getId());
-                            fragment.presentFragment(new ChatActivity(args), fragment instanceof ChatActivity);
-                        }
-                    }
+                if (messageObject == null) return;
+                final Activity activity = AndroidUtilities.findActivity(getContext());
+                final Activity playerActivity = activity instanceof LaunchActivity
+                        && AndroidUtilities.isContextSafe(activity) ? activity : LaunchActivity.instance;
+                if (!AndroidUtilities.isContextSafe(playerActivity)) return;
+                if (messageObject.isMusic()) {
+                    new AudioPlayerAlert(playerActivity, resourcesProvider).show();
+                } else if ((messageObject.isVoice() || messageObject.isRoundVideo())
+                        && !messageObject.isVoiceOnce() && !messageObject.isRoundOnce()
+                        && !messageObject.nyxDeleted) {
+                    org.telegram.ui.NyxVoiceQueue.show(playerActivity, resourcesProvider);
                 }
             } else if (currentStyle == STYLE_CONNECTING_GROUP_CALL) {
                 Intent intent = new Intent(getContext(), LaunchActivity.class).setAction("voip");
@@ -842,6 +824,27 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
         });
 
+        setOnLongClickListener(v -> {
+            if (currentStyle != STYLE_AUDIO_PLAYER || fragment == null) return false;
+            MessageObject message = MediaController.getInstance().getPlayingMessageObject();
+            if (message == null || message.currentAccount != fragment.getCurrentAccount()) return false;
+            if (chatActivity != null && chatActivity.getDialogId() == message.getDialogId()) {
+                chatActivity.scrollToMessageId(message.getId(), 0, false, 0, true, 0);
+            } else {
+                long dialogId = message.getDialogId();
+                Bundle args = new Bundle();
+                if (DialogObject.isEncryptedDialog(dialogId)) {
+                    args.putInt("enc_id", DialogObject.getEncryptedChatId(dialogId));
+                } else if (DialogObject.isUserDialog(dialogId)) {
+                    args.putLong("user_id", dialogId);
+                } else {
+                    args.putLong("chat_id", -dialogId);
+                }
+                args.putInt("message_id", message.getId());
+                fragment.presentFragment(new ChatActivity(args), fragment instanceof ChatActivity);
+            }
+            return true;
+        });
         setLeftMargin(leftMargin);
     }
 
@@ -1172,6 +1175,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
         }
         currentStyle = style;
+        setContentDescription(style == STYLE_AUDIO_PLAYER ? getString(R.string.NyxQueueOpen) : null);
         frameLayout.setWillNotDraw(currentStyle != STYLE_INACTIVE_GROUP_CALL);
         if (style != STYLE_INACTIVE_GROUP_CALL) {
             notifyButtonEnabled = false;
