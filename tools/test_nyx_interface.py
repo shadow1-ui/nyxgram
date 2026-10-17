@@ -53,7 +53,12 @@ tests='''
 }'''
 with tempfile.TemporaryDirectory() as d:
  p=Path(d)/'QueueTest.java';p.write_text(stubs+methods+tests)
- subprocess.run(['java',str(p)],check=True)
+ # Java 17 source-file launching selects the first top-level class (a stub),
+ # unlike newer launchers. Compile explicitly, then run the named test class.
+ compiler=Path(d)/'Compile.java'
+ compiler.write_text('import javax.tools.*;public class Compile{public static void main(String[] a){int n=ToolProvider.getSystemJavaCompiler().run(null,null,null,a);if(n!=0)System.exit(n);}}')
+ subprocess.run(['java',str(compiler),'-d',d,str(p)],check=True)
+ subprocess.run(['java','-cp',d,'QueueTest'],check=True)
 # Parse changed Java with javac, without falsely claiming an Android build.
 parser='''import javax.tools.*;import com.sun.source.util.*;import java.util.*;
 public class ParseJava{public static void main(String[]a)throws Exception{
