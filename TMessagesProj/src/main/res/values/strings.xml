@@ -11268,7 +11268,7 @@
     <string name="NyxSend">Отправить</string>
     <string name="NyxShowId">Показывать ID в профилях</string>
     <string name="NyxShowDc">Показывать DC фотографии</string>
-    <string name="NyxDcHint">DC — дата-центр фотографии профиля, а не достоверный дата-центр аккаунта. Если данных нет, Вы увидите «Недоступно». Нажмите на значение, чтобы скопировать его.</string>
+    <string name="NyxDcHint">DC — хранилище фото, не местоположение аккаунта.</string>
     <string name="NyxId">Telegram ID · нажмите для копирования</string>
     <string name="NyxDc">DC фотографии · нажмите для копирования</string>
     <string name="NyxUnavailable">Недоступно</string>
@@ -11346,7 +11346,7 @@
     <string name="NyxPinForgotAsk">Будет удалена вся локальная история Nyxgram всех аккаунтов и сброшен её код. Чаты Telegram останутся без изменений. Продолжить?</string>
     <string name="NyxStoryClientGhost">Не отправлять просмотры историй · экспериментально</string>
     <string name="NyxStoryClientHint">Отключает отправку отметок прочтения и просмотров историй этим клиентом. Не удаляет уже отправленные просмотры; реакции и ответы раскрывают Вашу активность. Работа требует проверки со второго аккаунта. Telegram Premium не требуется для самого переключателя.</string>
-    <string name="NyxIdCombined">ID и DC · нажмите для копирования ID</string>
+    <string name="NyxIdCombined">ID · DC</string>
     <string name="NyxPermanentLink">Скопировать ссылку по ID · Nyxgram</string>
     <string name="NyxProfileLinkHint">Ссылка по ID не зависит от username, но требует доступа к профилю и поддержки клиентом. Это не универсальная вечная публичная ссылка. Длительное нажатие на строку ID открывает меню ссылок и сохранения профиля. DC в строке — дата-центр фотографии; тип телефонного номера по нему определить нельзя.</string>
     <string name="NyxHideStickerTime">Скрывать время и статус на стикерах</string>
@@ -11441,4 +11441,19 @@
     <string name="NyxIconObsidian">Obsidian</string>
     <string name="NyxIconPaper">Paper</string>
     <string name="NyxLocalCollectibleUnavailable">Коллекционные статусы нельзя включить локально. Выберите обычный эмодзи-статус.</string>
+    <string name="NyxPersonalization">Ваш стиль</string>
+    <string name="NyxApplication">Приложение</string>
+    <string name="NyxDeletedTrash">Корзина</string>
+    <string name="NyxVoiceQueue">Очередь воспроизведения</string>
+    <string name="NyxQueueNow">Сейчас играет</string>
+    <string name="NyxQueueNext">Следующее</string>
+    <string name="NyxQueueEmpty">В очереди больше нет сообщений</string>
+    <string name="NyxQueueUnavailable">Сообщение больше недоступно</string>
+    <string name="NyxQueueOpen">Открыть плеер и очередь</string>
+    <string name="NyxQueueVoice">Голосовое сообщение</string>
+    <string name="NyxQueueRound">Видеосообщение</string>
+    <string name="NyxQueuePause">Пауза</string>
+    <string name="NyxQueuePlay">Продолжить</string>
+    <string name="NyxQueueHint">Здесь показаны сообщения из текущей очереди. Нажмите на сообщение, чтобы перейти к нему в воспроизведении.</string>
+    <string name="NyxQueueSeek">Позиция воспроизведения</string>
 </resources>
